@@ -58,7 +58,7 @@ mkdir ${build_out_dir}
 cd ${build_out_dir}
 
 cmake -G "${build_make_type}" -DCMAKE_EXPORT_COMPILE_COMMANDS=ON -D CMAKE_BUILD_TYPE=${build_out_type} -D_ECLIPSE_VERSION=${build_make_ver} -D PLATFORM=$platform ${build_src_dir}
-make -j4
+make
 
 
 exit 0

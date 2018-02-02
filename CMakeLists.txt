@@ -5,6 +5,8 @@ IF (WIN32)
 ELSE (WIN32)
 
 	ADD_SUBDIRECTORY(src/proto)
+	ADD_SUBDIRECTORY(src/anraft)
+
 
 	IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 		#ADD_SUBDIRECTORY(tools/test/functest)
