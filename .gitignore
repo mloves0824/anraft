@@ -33,3 +33,10 @@ rocksdb
 *.v12.suo
 
 ops/output/*
+
+nohup.out
+
+#pb.h,pb.cc
+*.pb.h
+*.pb.cc
+
