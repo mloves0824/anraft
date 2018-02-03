@@ -15,34 +15,22 @@
 // Author: chenbang@antalk.com
 
 #include <string>
-#include "anraft_options.h"
+#include "options.h"
+#include "status.h"
 
 namespace anraft {
 
-enum Status {
-    kOk = 0,
-    kNotFound = 1,
-    kCorruption = 2,
-    kNotSupported = 3,
-    kInvalidArgument = 4,
-    kIOError = 5,
-    kEndFile = 6,
-    kIncomplete = 7,
-    kComplete = 8,
-    kTimeout = 9,
-    kAuthFailed = 10
-};
-
-class AnRaft {
+class Anraft {
 public:
-	static Status Open(const AnraftOptions &options);
+	// Open the anraft with the specified options.
+    static Status Open(const Options& options,
+		               Anraft** raftptr);
 
-	AnRaft();
-	virtual ~AnRaft();
+    Anraft() {}
+    virtual ~Anraft() {}
 
-	virtual Status Put(const std::string &key, const std::string &value);
-	virtual Status Get(const std::string &key, std::string &value);
-
+    virtual Status Put(const std::string& key, const std::string& value);
+    virtual Status Get(const std::string& key, std::string& value);
 };
 
 }

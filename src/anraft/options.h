@@ -20,10 +20,10 @@
 
 namespace anraft {
 
-class AnraftOptions {
+class Options {
 public:
-	AnraftOptions();
-	~AnraftOptions();
+	Options() : check_leader_timer_(0), heatbeat_timer_(0) {}
+	virtual ~Options() {}
 
 private:
 	uint64_t check_leader_timer_;
