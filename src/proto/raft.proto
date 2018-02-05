@@ -4,6 +4,12 @@ option cc_generic_services = true;
 
 //refer to paper of raft: 
 
+enum Role {
+    kFollower = 0;
+    kCandidate = 1;
+    kLeader = 2;
+}
+
 message VoteRequest {
 	optional int64 term = 1;		
 	optional string candidate_id = 2;

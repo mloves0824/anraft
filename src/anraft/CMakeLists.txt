@@ -40,7 +40,9 @@ ELSE(WIN32)
 
 	INCLUDE_DIRECTORIES(
 		${PROJECT_SOURCE_DIR}/
+		${PROJECT_SOURCE_DIR}/../../third/rocksdb/include
 		${PROJECT_SOURCE_DIR}/../../third/brpc/output/include
+		${PROJECT_SOURCE_DIR}/../proto
 	)
 
 	LINK_DIRECTORIES(${PROJECT_LIB_DIR})

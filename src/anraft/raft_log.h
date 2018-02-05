@@ -13,24 +13,43 @@
 // limitations under the License.
 
 // Author: chenbang@antalk.com
-#ifndef SOURCE_DIRECTORY__SRC_ANRAFT_ANRAFT_OPTIONS_H_
-#define SOURCE_DIRECTORY__SRC_ANRAFT_ANRAFT_OPTIONS_H_
 
-#include <string>
+#ifndef SOURCE_DIRECTORY__SRC_ANRAFT_RAFT_LOG_H_
+#define SOURCE_DIRECTORY__SRC_ANRAFT_RAFT_LOG_H_
+
+#include "rocksdb/db.h"
 
 namespace anraft {
 
-class Options {
+class RaftLog {
 public:
-	Options() : check_leader_timer_(0), heatbeat_timer_(0) {}
-	virtual ~Options() {}
+	RaftLog();
+	virtual ~RaftLog();
+
+	bool Open(const std::string& db_path);
+
+	uint64_t GetCurrentTerm();
+	void SetCurrentTerm(const uint64_t current_term);
 
 private:
-	uint64_t check_leader_timer_;
-	uint64_t heatbeat_timer_;
+	//log[] log entries; each entry contains command
+	//	    for state machine, and term when entry
+	//		was received by leader(first index is 1)	rocksdb::DB* log_;  
 };
-
 }
 
 
-#endif /* SOURCE_DIRECTORY__SRC_ANRAFT_ANRAFT_OPTIONS_H_ */
+
+
+
+
+
+
+
+
+
+
+
+
+
+#endif

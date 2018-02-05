@@ -13,39 +13,25 @@
 // limitations under the License.
 
 // Author: chenbang@antalk.com
+#ifndef SOURCE_DIRECTORY__SRC_ANRAFT_ANRAFT_OPTIONS_H_
+#define SOURCE_DIRECTORY__SRC_ANRAFT_ANRAFT_OPTIONS_H_
+
+#include <string>
 
 namespace anraft {
 
-class Status {
-public:
-	//Create success status
-	Status() : code_(kOk), subcode_(kNone) {}
-	virtual ~Status() {}
+struct AnraftOptions {
+	AnraftOptions() : check_leader_us(0), heatbeat_us(0) {}
+	virtual ~AnraftOptions() {}
 
-	Status(const Status& s) : code_(s.code_), subcode_(s.subcode_) {}
-	Status& operator=(const Status& s) {
-		if (this != &s) {
-			code_ = s.code_;
-			subcode_ = s.subcode_;
-		}
-		return *this;
-	}
-
-	enum Code {
-		kOk = 0,
-		kInvalidArgument = 1,
-		kNotSupported = 2,
-		kMaxCode
-	};
-
-	enum SubCode {
-		kNone = 0,
-		kMaxSubCode
-	};
-
-private:
-	Code code_;
-	SubCode subcode_;
+	uint64_t check_leader_us;
+	uint64_t heatbeat_us;
+	std::vector<std::string> nodes;
+	std::string local_addr;
+	std::string db_path;
 };
 
 }
+
+
+#endif /* SOURCE_DIRECTORY__SRC_ANRAFT_ANRAFT_OPTIONS_H_ */
