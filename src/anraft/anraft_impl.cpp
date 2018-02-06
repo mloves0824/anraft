@@ -65,9 +65,13 @@ void AnraftImpl::Election(void*) {
 
 	VoteRequest* request = new VoteRequest;
 	VoteResponse* response = new VoteResponse;
-	
-	std::function<void(VoteRequest* request, VoteResponse* response, bool, int)> callback = 
-		          std::bind(&AnraftImpl::ElectionCallback, this, request, response, std::placeholders::_3, std::placeholders::_4);
+	request->set_term(current_term_);
+	request->set_candidate_id(options_.local_addr);
+	request->set_last_log_term(last_log_term_);
+	request->set_last_log_index(last_log_index_);
+	std::function<void(const VoteRequest* request, VoteResponse* response, bool, int, const std::string&)> callback = 
+					  std::bind(&AnraftImpl::ElectionCallback, this, request, response, 
+					  std::placeholders::_3, std::placeholders::_4, std::placeholders::_5);
 	if (!rpc_client_->SendRequest(&RaftNode_Stub::Vote, request, response, callback)) {
 		LOG(NOTICE) << "Fail to SendRequest.";
 		return;
@@ -88,7 +92,40 @@ void AnraftImpl::Election(void*) {
 void AnraftImpl::ElectionCallback(const ::anraft::VoteRequest* request,
 	                              ::anraft::VoteResponse* response,
 	                              bool failed,
-	                              int error) {
+	                              int error,
+								  const std::string &vote_node) {
+	if (!failed || error) {
+		LOG(ERROR) << "ElectionCallback: failed=" << failed << ",error=" << error;
+		return;
+	}
+
+	int64_t term = response->term();
+	bool granted = response->vote_granted();
+	if (term > current_term_) {
+		if (role_ == kLeader) {
+			LOG(WARNING) << "Leader change to Follower";
+		} else {
+			LOG(WARNING) << "Change role to Follower";
+		}
+		current_term_ = term;
+		voted_for_ = "";
+		//TODO update db
+		role_ = kFollower;
+		ResetElection();
+	}
+
+	if (term != current_term_ || !granted || role_ == kLeader) {
+		return;
+	}
+
+	votes_.insert(vote_node);
+	if (votes_.size() >= (options_.nodes.size() / 2 + 1)) {
+		role_ = kLeader;
+		leader_ = options_.local_addr;
+		//TODO update db
+		//TODO cancel election
+		//TODO start heartbeat
+	}
 }
 
 
@@ -106,6 +143,20 @@ bool AnraftImpl::Recover(const std::string& db_path) {
 
 	current_term_ = log_->GetCurrentTerm();
 
+}
+
+
+
+void AnraftImpl::ResetElection() {
+	bthread_timer_t timer_id = 0;
+	int rc = bthread_timer_add(&timer_id,
+		                       butil::microseconds_to_timespec(election_timeout_),
+		                       std::bind(&AnraftImpl::Election,
+		                       this, std::placeholders::_1), NULL);
+	if (rc) {
+		LOG(ERROR) << "Fail to add timer: " << berror(rc);
+		return;
+	}
 }
 
 }

@@ -16,6 +16,8 @@
 
 #include <vector>
 #include <string>
+#include <set>
+#include <mutex>
 #include "raft.pb.h"
 #include "rocksdb/db.h"
 #include "anraft_client.h"
@@ -39,11 +41,13 @@ public:
 		               ::google::protobuf::Closure* done);
 private:
 	void Election(void*);
-	void ElectionCallback(VoteRequest* request,
+	void ElectionCallback(const VoteRequest* request,
 		                  VoteResponse* response, 
 						  bool failed,
-						  int error);
+						  int error,
+						  const std::string &vote_node);
 	bool Recover(const std::string& db_path);
+	void ResetElection();
 
 private:
 	//Persistent state on all servers :
@@ -81,6 +85,9 @@ private:
 	std::vector<FollowerContext*> follower_contexts_;
 
 
+	int64_t last_log_term_;
+	int64_t last_log_index_;
+	std::set<std::string> votes_;
 
 	Role role_;
 	std::string leader_;
@@ -90,6 +97,7 @@ private:
 	AnraftOptions options_;
 	AnraftNodeClientPtr rpc_client_;
 
+	std::mutex mutex_;
 };
 
 }

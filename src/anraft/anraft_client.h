@@ -13,12 +13,15 @@
 // limitations under the License.
 
 // Author: chenbang@antalk.com
+#ifndef SOURCE_DIRECTORY__SRC_ANRAFT_ANRAFT_CLIENT_H_
+#define SOURCE_DIRECTORY__SRC_ANRAFT_ANRAFT_CLIENT_H_
 
 #include <memory>
 #include <vector>
 #include <functional>
 #include "brpc/channel.h"
 #include "raft.pb.h"
+#include "butil/logging.h"
 
 namespace anraft {
 
@@ -29,9 +32,9 @@ public:
 
 	template <class Request, class Response, class Callback> 
 	bool SendRequest(void(RaftNode_Stub::*func)(google::protobuf::RpcController*,
-												Request*, Response*, Callback*),
-					 Request* request, Response *response, 
-					 std::function<void(Request*, Response*, bool, int)> callback,
+												const Request*, Response*, Callback*),
+					 const Request* request, Response *response, 
+					 std::function<void(const Request*, Response*, bool, int, const std::string&)> callback,
 					 int64_t timeout = 300, int retry_times = 1) {
 		for (auto &x : stubs_) {
 			if (x.second) {
@@ -40,24 +43,33 @@ public:
 					(x.second->*func)(&cntl, request, response, NULL);
 				}
 				else {
+					brpc::Controller *cntl = new brpc::Controller();
 					// We use protobuf utility `NewCallback' to create a closure object
 					// that will call our callback `HandleEchoResponse'. This closure
 					// will automatically delete itself after being called once
 					google::protobuf::Closure* done = brpc::NewCallback(
 						&AnraftNodeClient::template RpcCallBack<Request, Response, Callback>, cntl, request, response, callback);
-					brpc::Controller *cntl = new brpc::Controller();
-					(x.second->*func)(&cntl, request, response, done);
+					(x.second->*func)(cntl, request, response, done);
 				}
 			}
 		}
 	}
 
 	template <class Request, class Response, class Callback> 
-	static void RpcCallBack(brpc::Controller *cntl,
-						    Request *req,
+	static void RpcCallBack(brpc::Controller* cntl,
+						    const Request* req,
 							Response *resp,
-							std::function<void(Request*, Response*, bool, int)> callback) {
-	
+							std::function<void(const Request*, Response*, bool, int, const std::string&)> callback) {
+		bool failed = cntl->Failed();
+		int error = cntl->ErrorCode();
+		if (!failed || error) {
+			LOG(ERROR) << "RpcCallBack: failed=" << failed << ",error=" << error;
+			//TODO retry
+		} 
+
+		std::string vote_node = butil::endpoint2str(cntl->remote_side()).c_str();
+		delete cntl;
+		callback(req, resp, failed, error, vote_node);
 	}
 
 private:
@@ -68,3 +80,5 @@ private:
 
 typedef std::shared_ptr<AnraftNodeClient> AnraftNodeClientPtr;
 }
+
+#endif
