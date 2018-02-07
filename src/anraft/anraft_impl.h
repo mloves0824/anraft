@@ -23,6 +23,7 @@
 #include "anraft_client.h"
 #include "anraft_options.h"
 #include "raft_log.h"
+#include "butil/synchronization/condition_variable.h"
 
 namespace anraft {
 
@@ -48,6 +49,9 @@ private:
 						  const std::string &vote_node);
 	bool Recover(const std::string& db_path);
 	void ResetElection();
+
+	void ReplicateLog(void*);
+	void ReplicateLogToFollower(uint32_t id);
 
 private:
 	//Persistent state on all servers :
@@ -81,6 +85,8 @@ private:
 	struct FollowerContext {
 		int64_t next_index;
 		int64_t match_index;
+		bthread_t tid;
+		butil::ConditionVariable conditon;
 	};
 	std::vector<FollowerContext*> follower_contexts_;
 
@@ -91,6 +97,7 @@ private:
 
 	Role role_;
 	std::string leader_;
+	bool is_stop_;
 
 	int64_t election_timeout_;
 

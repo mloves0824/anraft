@@ -19,6 +19,7 @@
 #include "bthread/bthread.h"
 #include "bthread/unstable.h"
 #include "anraft_impl.h"
+#include "butil/time/time.h"
 
 namespace anraft {
 
@@ -37,6 +38,14 @@ AnraftImpl::AnraftImpl() : rpc_client_(AnraftNodeClientPtr(new AnraftNodeClient(
 		LOG(ERROR) << "Fail to add timer: " << berror(rc);
 		return;
 	}
+
+	for (int i = 0; i < follower_contexts_.size(); i++) {
+		if (bthread_start_background(&(follower_contexts_[i]->tid), NULL, std::bind(&AnraftImpl::ReplicateLog, this, (void*)&i), NULL) != 0) {
+			LOG(ERROR) << "Fail to create bthread";
+			return;
+		}
+	}
+
 }
 
 AnraftImpl::~AnraftImpl() {}
@@ -142,7 +151,6 @@ bool AnraftImpl::Recover(const std::string& db_path) {
 	}
 
 	current_term_ = log_->GetCurrentTerm();
-
 }
 
 
@@ -158,6 +166,35 @@ void AnraftImpl::ResetElection() {
 		return;
 	}
 }
+
+
+void AnraftImpl::ReplicateLog(void *arg) {
+	int id = 0;
+	if (arg) {
+		id = *(int*)arg;
+	}
+	FollowerContext *follower = follower_contexts_[id];
+
+	while (true) {
+		
+		if (is_stop_) {
+			return;
+		}
+		while (role_ != kLeader) {
+			follower->conditon.Wait();
+		}
+
+		ReplicateLogToFollower(id);
+		int64_t time_replica;
+		follower->conditon.TimedWait(butil::TimeDelta::FromMicroseconds(time_replica));
+	}
+}
+
+
+void AnraftImpl::ReplicateLogToFollower(uint32_t id) {
+
+}
+
 
 }
 
