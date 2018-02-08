@@ -13,11 +13,14 @@
 // limitations under the License.
 
 // Author: chenbang@antalk.com
+#ifndef SOURCE_DIRECTORY__SRC_ANRAFT_IMPL_H_
+#define SOURCE_DIRECTORY__SRC_ANRAFT_IMPL_H_
 
 #include <vector>
 #include <string>
 #include <set>
 #include <mutex>
+#include <thread>
 #include "raft.pb.h"
 #include "rocksdb/db.h"
 #include "anraft_client.h"
@@ -29,6 +32,14 @@ namespace anraft {
 
 class AnraftImpl : public RaftNode {
 public:
+
+	struct FollowerContext {
+		int64_t next_index;
+		int64_t match_index;
+		bthread_t tid;
+		butil::ConditionVariable conditon;
+	};
+
 	AnraftImpl();
 	~AnraftImpl();
 
@@ -51,7 +62,9 @@ private:
 	void ResetElection();
 
 	void ReplicateLog(void*);
-	void ReplicateLogToFollower(uint32_t id);
+	void ReplicateLogToFollower(FollowerContext* context, uint32_t id);
+
+	bool CheckTerm(int64_t term);
 
 private:
 	//Persistent state on all servers :
@@ -82,12 +95,6 @@ private:
 	//	matchIndex[] for each server, index of highest log entry
 	//	             known to be replicated on server
 	//	             (initialized to 0, increases monotonically)
-	struct FollowerContext {
-		int64_t next_index;
-		int64_t match_index;
-		bthread_t tid;
-		butil::ConditionVariable conditon;
-	};
 	std::vector<FollowerContext*> follower_contexts_;
 
 
@@ -108,3 +115,5 @@ private:
 };
 
 }
+
+#endif

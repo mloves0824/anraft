@@ -31,6 +31,9 @@ public:
 	uint64_t GetCurrentTerm();
 	void SetCurrentTerm(const uint64_t current_term);
 
+	bool ReadEntry(int64_t index, std::string* entry);
+	bool WriteEntry(int64_t index, const std::string& entry);
+
 private:
 	//log[] log entries; each entry contains command
 	//	    for state machine, and term when entry

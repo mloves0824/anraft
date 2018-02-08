@@ -176,7 +176,8 @@ void AnraftImpl::ReplicateLog(void *arg) {
 	FollowerContext *follower = follower_contexts_[id];
 
 	while (true) {
-		
+		assert(follower->match_index <= follower->next_index);
+
 		if (is_stop_) {
 			return;
 		}
@@ -184,15 +185,100 @@ void AnraftImpl::ReplicateLog(void *arg) {
 			follower->conditon.Wait();
 		}
 
-		ReplicateLogToFollower(id);
+		ReplicateLogToFollower(follower, id);
 		int64_t time_replica;
 		follower->conditon.TimedWait(butil::TimeDelta::FromMicroseconds(time_replica));
 	}
 }
 
 
-void AnraftImpl::ReplicateLogToFollower(uint32_t id) {
+void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
+	std::unique_lock<std::mutex> lock;
 
+	auto req = std::unique_ptr<AppendEntriesRequest>(new AppendEntriesRequest);
+	auto resp = std::unique_ptr<AppendEntriesResponse>(new AppendEntriesResponse);
+	req->set_term(current_term_);
+	req->set_leader_id(leader_);
+	req->set_leader_commit(commit_index_);
+	if (context->match_index < last_log_index_) { //如果match_index小于last_log_index，说明还有log没有被确认
+		std::string prev_log;
+		if (!log_->ReadEntry(context->next_index - 1, &prev_log)) {
+			LOG(ERROR) << "Fail to Read Prev Entry.";
+			return;
+		}
+
+		LogEntry prev_entry;
+		if (!prev_entry.ParseFromString(prev_log)) {
+			LOG(ERROR) << "Fail to ParseFromString.";
+			return;
+		}
+		req->set_prev_log_index(prev_entry.index());
+		req->set_prev_log_term(prev_entry.term());
+
+		for (int64_t i = context->next_index; i <= last_log_index_; i++) {
+			std::string log;
+			if (!log_->ReadEntry(i, &log)) {
+				LOG(ERROR) << "Fail to Read Entry.";
+				return;
+			}
+			LogEntry* entry = req->add_entries();
+			if (!entry->ParseFromString(log)) {
+				LOG(ERROR) << "Fail to ParseFromString.";
+				return;
+			}
+
+			if (req->ByteSize() >= 1024 * 1024) {
+				LOG(NOTICE) << "ByteSize is bigger than 1M.";
+				break;
+			}
+
+		}
+	}
+	std::function<void(const AppendEntriesRequest* request, AppendEntriesResponse* response, bool, int, const std::string&)> callback;
+	if (!rpc_client_->SendRequest(&RaftNode_Stub::AppendEntries, req.get(), resp.get(), callback)) {
+		LOG(NOTICE) << "Fail to SendRequest AppendEntries.";
+		return;
+	}
+
+	int64_t term = resp->term();
+	bool success = resp->success();
+	if (!CheckTerm(term)) {
+		LOG(ERROR) << "CheckTerm error.";
+		return;
+	}
+	if (!success) {
+		LOG(ERROR) << "AppendEntries error.";
+		//回退next_index
+		if (context->next_index > context->match_index 
+			&& context->next_index > 1) {
+			--context->next_index;
+		}
+		return;
+	}
+
+
+
+}
+
+
+bool AnraftImpl::CheckTerm(int64_t term) {
+
+	if (term > current_term_) {
+		if (role_ == kLeader) {
+			LOG(WARNING) << "Leader change to Follower";
+		}
+		else {
+			LOG(WARNING) << "Change role to Follower";
+		}
+		current_term_ = term;
+		voted_for_ = "";
+		//TODO update db
+		role_ = kFollower;
+		ResetElection();
+		return false;
+	}
+
+	return true;
 }
 
 

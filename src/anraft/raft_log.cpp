@@ -55,4 +55,7 @@ void RaftLog::SetCurrentTerm(const uint64_t current_term) {
 	return;
 }
 
+bool RaftLog::ReadEntry(int64_t index, std::string* entry) {}
+bool RaftLog::WriteEntry(int64_t index, const std::string& entry) {}
+
 }
