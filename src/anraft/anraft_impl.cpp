@@ -195,12 +195,16 @@ void AnraftImpl::ReplicateLog(void *arg) {
 void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
 	std::unique_lock<std::mutex> lock;
 
+	//参与复制的日志中最大的索引值和任期号
+	int64_t max_index = 0; 
+	int64_t max_term = -1;
 	auto req = std::unique_ptr<AppendEntriesRequest>(new AppendEntriesRequest);
 	auto resp = std::unique_ptr<AppendEntriesResponse>(new AppendEntriesResponse);
 	req->set_term(current_term_);
 	req->set_leader_id(leader_);
 	req->set_leader_commit(commit_index_);
-	if (context->match_index < last_log_index_) { //如果match_index小于last_log_index，说明还有log没有被确认
+	//如果match_index小于last_log_index，说明还有log没有被确认
+	if (context->match_index < last_log_index_) { 
 		std::string prev_log;
 		if (!log_->ReadEntry(context->next_index - 1, &prev_log)) {
 			LOG(ERROR) << "Fail to Read Prev Entry.";
@@ -226,6 +230,8 @@ void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
 				LOG(ERROR) << "Fail to ParseFromString.";
 				return;
 			}
+			max_index = entry->index();
+			max_term = entry->term();
 
 			if (req->ByteSize() >= 1024 * 1024) {
 				LOG(NOTICE) << "ByteSize is bigger than 1M.";
@@ -253,6 +259,11 @@ void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
 			&& context->next_index > 1) {
 			--context->next_index;
 		}
+		return;
+	}
+
+	if (max_index < 0 || max_term != current_term_) {
+		LOG(ERROR) << "max_index or max_term error.";
 		return;
 	}
 
