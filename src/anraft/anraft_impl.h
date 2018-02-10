@@ -21,6 +21,7 @@
 #include <set>
 #include <mutex>
 #include <thread>
+#include <map>
 #include "raft.pb.h"
 #include "rocksdb/db.h"
 #include "anraft_client.h"
@@ -74,10 +75,10 @@ private:
 	int64_t current_term_;
 
 	//votedFor candidateId that received vote in current
-	//	       term(or null if none)	std::string voted_for_;
+	//	       term(or null if none)	std::string voted_for_;
 	//log[] log entries; each entry contains command
 	//	    for state machine, and term when entry
-	//		was received by leader(first index is 1)	RaftLog* log_;
+	//		was received by leader(first index is 1)	RaftLog* log_;
 	//Volatile state on all servers :
 	//commitIndex index of highest log entry known to be
 	//	          committed(initialized to 0, increases
@@ -86,7 +87,7 @@ private:
 
 	//	lastApplied index of highest log entry applied to state
 	//	            machine(initialized to 0, increases
-	//	            monotonically)	int64_t last_applied_;
+	//	            monotonically)	int64_t last_applied_;
 	//Volatile state on leaders :
 	//(Reinitialized after election)
 	//	nextIndex[] for each server, index of the next log entry
@@ -101,6 +102,7 @@ private:
 	int64_t last_log_term_;
 	int64_t last_log_index_;
 	std::set<std::string> votes_;
+	std::map<int64_t, std::function<void(void)> > apply_callbacks_;
 
 	Role role_;
 	std::string leader_;

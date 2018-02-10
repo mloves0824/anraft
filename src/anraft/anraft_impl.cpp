@@ -195,7 +195,7 @@ void AnraftImpl::ReplicateLog(void *arg) {
 void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
 	std::unique_lock<std::mutex> lock;
 
-	//²ÎÓë¸´ÖÆµÄÈÕÖ¾ÖÐ×î´óµÄË÷ÒýÖµºÍÈÎÆÚºÅ
+	//ï¿½ï¿½ï¿½ë¸´ï¿½Æµï¿½ï¿½ï¿½Ö¾ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Öµï¿½ï¿½ï¿½ï¿½ï¿½Úºï¿½
 	int64_t max_index = 0; 
 	int64_t max_term = -1;
 	auto req = std::unique_ptr<AppendEntriesRequest>(new AppendEntriesRequest);
@@ -203,7 +203,7 @@ void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
 	req->set_term(current_term_);
 	req->set_leader_id(leader_);
 	req->set_leader_commit(commit_index_);
-	//Èç¹ûmatch_indexÐ¡ÓÚlast_log_index£¬ËµÃ÷»¹ÓÐlogÃ»ÓÐ±»È·ÈÏ
+	//ï¿½ï¿½ï¿½match_indexÐ¡ï¿½ï¿½last_log_indexï¿½ï¿½Ëµï¿½ï¿½ï¿½ï¿½ï¿½ï¿½logÃ»ï¿½Ð±ï¿½È·ï¿½ï¿½
 	if (context->match_index < last_log_index_) { 
 		std::string prev_log;
 		if (!log_->ReadEntry(context->next_index - 1, &prev_log)) {
@@ -254,7 +254,7 @@ void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
 	}
 	if (!success) {
 		LOG(ERROR) << "AppendEntries error.";
-		//»ØÍËnext_index
+		//ï¿½ï¿½ï¿½ï¿½next_index
 		if (context->next_index > context->match_index 
 			&& context->next_index > 1) {
 			--context->next_index;
@@ -266,7 +266,33 @@ void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
 		LOG(ERROR) << "max_index or max_term error.";
 		return;
 	}
+    std::vector<int64_t> vec_match_index;
+    for (int i = 0; i < follower_contexts_.size(); i++) {
+    	if (options_.nodes[i] == options_.local_addr) {
+    		vec_match_index.push_back(1LL<<60);   //è‡ªå·±æŽ’åœ¨æœ€åŽé¢
+    	} else {
+    		vec_match_index.push_back(follower_contexts_[i]->match_index);
+    	}
+    }
+    std::sort(vec_match_index.begin(), vec_match_index.end());
+    int64_t commit_index = vec_match_index[options_.nodes.size() / 2 - 1];
+    if (commit_index > commit_index_) {
+    	commit_index_ = commit_index;
+    	while (last_applied_ < commit_index) {
+    		last_applied_++;
+        	auto it = apply_callbacks_.find(last_applied_);
+        	if (it != apply_callbacks_.end()) {
+        		auto callback = it->second;
+        		apply_callbacks_.erase(it);
+        		callback();
+        	} else {
 
+        	}
+    	}
+    	if (last_applied_ == commit_index) {
+    		//TODO update meta
+    	}
+    }
 
 
 }
