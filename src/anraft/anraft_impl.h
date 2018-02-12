@@ -67,6 +67,8 @@ private:
 
 	bool CheckTerm(int64_t term);
 
+
+
 private:
 	//Persistent state on all servers :
 	//(Updated on stable storage before responding to RPCs)

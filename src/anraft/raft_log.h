@@ -34,6 +34,13 @@ public:
 	bool ReadEntry(int64_t index, std::string* entry);
 	bool WriteEntry(int64_t index, const std::string& entry);
 
+	bool StoreMeta(const std::string& key, const std::string& value);
+	bool StoreMeta(const std::string& key, int64_t value);
+	bool GetMeta(const std::string& key, int64_t* value);
+	bool GetMeat(const std::string& key, std::string* value);
+
+	bool StoreLog(int64_t term, int64_t index, const std::string& log);
+	bool GetLog(int64_t term, int64_t index, std::string* log);
 private:
 	//log[] log entries; each entry contains command
 	//	    for state machine, and term when entry

@@ -58,4 +58,12 @@ void RaftLog::SetCurrentTerm(const uint64_t current_term) {
 bool RaftLog::ReadEntry(int64_t index, std::string* entry) {}
 bool RaftLog::WriteEntry(int64_t index, const std::string& entry) {}
 
+bool RaftLog::StoreMeta(const std::string& key, const std::string& value) {}
+bool RaftLog::StoreMeta(const std::string& key, int64_t value) {}
+bool RaftLog::GetMeta(const std::string& key, int64_t* value) {}
+bool RaftLog::GetMeat(const std::string& key, std::string* value) {}
+
+bool RaftLog::StoreLog(int64_t term, int64_t index, const std::string& log) {}
+bool RaftLog::GetLog(int64_t term, int64_t index, std::string* log) {}
+
 }
