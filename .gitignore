@@ -32,6 +32,9 @@ rocksdb
 *.opensdf
 *.v12.suo
 vs2013/*
+*.bat
+*.exe
+Debug/*
 
 ops/output/*
 
