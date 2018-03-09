@@ -23,6 +23,7 @@
 #include <tuple>
 #include "proto/raft.pb.h"
 #include "anraft/storage.h"
+#include "anraft/node.h"
 
 namespace example {
     
@@ -40,6 +41,10 @@ private:
              const std::vector<std::string>& peers,
              bool join,
              GetSnapshotFunc_t getsnapshot_func);
+
+    void StartRaft();
+    void ServeChannels();
+    static void OnTickTimer(void *arg);
 
 private:
 	// client ID for raft session
@@ -59,7 +64,7 @@ private:
 	uint64_t applied_index_;
 
 	// raft backing for the commit/error channel
-	//node        raft.Node
+    anraft::Node node_;
 	anraft::MemoryStorage& raft_storage_;
 };
 

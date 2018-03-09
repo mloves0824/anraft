@@ -195,7 +195,7 @@ void AnraftImpl::ReplicateLog(void *arg) {
 void AnraftImpl::ReplicateLogToFollower(FollowerContext* context, uint32_t id) {
 	std::unique_lock<std::mutex> lock;
 
-	//���븴�Ƶ���־����������ֵ�����ں�
+	//���븴�Ƶ���־����������ֵ�����ں� 
 	int64_t max_index = 0; 
 	int64_t max_term = -1;
 	auto req = std::unique_ptr<AppendEntriesRequest>(new AppendEntriesRequest);
