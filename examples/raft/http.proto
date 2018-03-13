@@ -1,0 +1,18 @@
+syntax="proto2";
+package example;
+
+option cc_generic_services = true;
+
+message HttpRequest { 
+  optional bytes message = 1;
+};
+message HttpResponse {
+  optional bytes message = 1;
+};
+
+service HttpService {
+  rpc PUT(HttpRequest) returns (HttpResponse);
+  rpc GET(HttpRequest) returns (HttpResponse);
+  rpc POST(HttpRequest) returns (HttpResponse);
+  rpc DELETE(HttpRequest) returns (HttpResponse);
+};

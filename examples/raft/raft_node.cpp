@@ -21,12 +21,14 @@
 
 namespace example {
 
-RaftNode& RaftNode::NewRaftNode(int id,
+NewRaftNodeReturnType RaftNode::NewRaftNode(int id,
                                 const std::vector<std::string>& peers,
                                 bool join,
-                                GetSnapshotFunc_t getsnapshot_func) {
-    static RaftNode g_raft_node(id, peers, join, getsnapshot_func);
-    return g_raft_node;
+                                GetSnapshotFunc_t getsnapshot_func,
+                                std::promise<std::string> promise_propose,
+                                std::promise<anraft::ConfChange> promise_confchange) {
+    //static RaftNode g_raft_node(id, peers, join, getsnapshot_func);
+    //return g_raft_node;
 }
 
 RaftNode::RaftNode(int id,

@@ -13,6 +13,7 @@
 // limitations under the License.
 
 // Author: chenbang@antalk.com
+
 #ifndef SOURCE_DIRECTORY__SRC_EXAMPLES_RAFT__H_
 #define SOURCE_DIRECTORY__SRC_EXAMPLES_RAFT__H_
 
@@ -21,20 +22,31 @@
 #include <stdint.h>
 #include <functional>
 #include <tuple>
+#include <future>
 #include "proto/raft.pb.h"
 #include "anraft/storage.h"
 #include "anraft/node.h"
+#include "raftsnap/snapshotter.h"
 
 namespace example {
     
-typedef std::function< std::tuple<std::vector<uint8_t>, anraft::RaftError>() > GetSnapshotFunc_t;
+typedef std::function< std::tuple<std::vector<uint8_t>, anraft::RaftError>() > GetSnapshotFunc_t; //TODO
+typedef std::tuple<std::promise<std::string>, std::promise<anraft::RaftError>,  std::promise<raftsnap::SnapshotterPtr> > NewRaftNodeReturnType;
 
 class RaftNode {
 public:
-	static RaftNode& NewRaftNode(int id, 
-                                 const std::vector<std::string>& peers,
-                                 bool join,
-                                 GetSnapshotFunc_t getsnapshot_func);
+	//static RaftNode& NewRaftNode(int id, 
+ //                                const std::vector<std::string>& peers,
+ //                                bool join,
+ //                                GetSnapshotFunc_t getsnapshot_func);
+    //func newRaftNode(id int, peers[]string, join bool, getSnapshot func() ([]byte, error), proposeC <-chan string,
+    //    confChangeC <-chan raftpb.ConfChange) (<-chan *string, <-chan error, <-chan *raftsnap.Snapshotter) {
+    static NewRaftNodeReturnType NewRaftNode(int id,
+                                            const std::vector<std::string>& peers,
+                                            bool join,
+                                            GetSnapshotFunc_t getsnapshot_func,
+                                            std::promise<std::string> promise_propose,
+                                            std::promise<anraft::ConfChange> promise_confchange);
 
 private:
     RaftNode(int id,
