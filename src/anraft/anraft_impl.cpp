@@ -29,22 +29,22 @@ AnraftImpl::AnraftImpl() : rpc_client_(AnraftNodeClientPtr(new AnraftNodeClient(
 		return;
 	}
 
-	bthread_timer_t timer_id = 0;
-	int rc = bthread_timer_add(&timer_id, 
-		                       butil::microseconds_to_timespec(election_timeout_), 
-					           std::bind(&AnraftImpl::Election, 
-					           this, std::placeholders::_1), NULL);
-	if (rc) {
-		LOG(ERROR) << "Fail to add timer: " << berror(rc);
-		return;
-	}
-
-	for (int i = 0; i < follower_contexts_.size(); i++) {
-		if (bthread_start_background(&(follower_contexts_[i]->tid), NULL, std::bind(&AnraftImpl::ReplicateLog, this, (void*)&i), NULL) != 0) {
-			LOG(ERROR) << "Fail to create bthread";
-			return;
-		}
-	}
+//	bthread_timer_t timer_id = 0;
+//	int rc = bthread_timer_add(&timer_id,
+//		                       butil::microseconds_to_timespec(election_timeout_),
+//					           std::bind(&AnraftImpl::Election,
+//					           this, std::placeholders::_1), NULL);
+//	if (rc) {
+//		LOG(ERROR) << "Fail to add timer: " << berror(rc);
+//		return;
+//	}
+//
+//	for (int i = 0; i < follower_contexts_.size(); i++) {
+//		if (bthread_start_background(&(follower_contexts_[i]->tid), NULL, std::bind(&AnraftImpl::ReplicateLog, this, (void*)&i), NULL) != 0) {
+//			LOG(ERROR) << "Fail to create bthread";
+//			return;
+//		}
+//	}
 
 }
 
@@ -85,16 +85,16 @@ void AnraftImpl::Election(void*) {
 		LOG(NOTICE) << "Fail to SendRequest.";
 		return;
 	}
-
-	bthread_timer_t timer_id = 0;
-	int rc = bthread_timer_add(&timer_id,
-		                       butil::microseconds_to_timespec(election_timeout_),
-		                       std::bind(&AnraftImpl::Election,
-		                       this, std::placeholders::_1), NULL);
-	if (rc) {
-		LOG(ERROR) << "Fail to add timer: " << berror(rc);
-		return;
-	}
+//
+//	bthread_timer_t timer_id = 0;
+//	int rc = bthread_timer_add(&timer_id,
+//		                       butil::microseconds_to_timespec(election_timeout_),
+//		                       std::bind(&AnraftImpl::Election,
+//		                       this, std::placeholders::_1), NULL);
+//	if (rc) {
+//		LOG(ERROR) << "Fail to add timer: " << berror(rc);
+//		return;
+//	}
 }
 
 
@@ -156,15 +156,15 @@ bool AnraftImpl::Recover(const std::string& db_path) {
 
 
 void AnraftImpl::ResetElection() {
-	bthread_timer_t timer_id = 0;
-	int rc = bthread_timer_add(&timer_id,
-		                       butil::microseconds_to_timespec(election_timeout_),
-		                       std::bind(&AnraftImpl::Election,
-		                       this, std::placeholders::_1), NULL);
-	if (rc) {
-		LOG(ERROR) << "Fail to add timer: " << berror(rc);
-		return;
-	}
+//	bthread_timer_t timer_id = 0;
+//	int rc = bthread_timer_add(&timer_id,
+//		                       butil::microseconds_to_timespec(election_timeout_),
+//		                       std::bind(&AnraftImpl::Election,
+//		                       this, std::placeholders::_1), NULL);
+//	if (rc) {
+//		LOG(ERROR) << "Fail to add timer: " << berror(rc);
+//		return;
+//	}
 }
 
 
