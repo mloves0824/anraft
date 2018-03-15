@@ -27,20 +27,19 @@
 #include "anraft/storage.h"
 #include "anraft/node.h"
 #include "raftsnap/snapshotter.h"
+#include "wal/wal.h"
+#include "rafthttp/transport.h"
 
 namespace example {
     
 typedef std::function< std::tuple<std::vector<uint8_t>, anraft::RaftError>() > GetSnapshotFunc_t; //TODO
 typedef std::tuple<std::promise<std::string>, std::promise<anraft::RaftError>,  std::promise<raftsnap::SnapshotterPtr> > NewRaftNodeReturnType;
 
+const uint64_t default_snap_count = 10000;
+
+
 class RaftNode {
 public:
-	//static RaftNode& NewRaftNode(int id, 
- //                                const std::vector<std::string>& peers,
- //                                bool join,
- //                                GetSnapshotFunc_t getsnapshot_func);
-    //func newRaftNode(id int, peers[]string, join bool, getSnapshot func() ([]byte, error), proposeC <-chan string,
-    //    confChangeC <-chan raftpb.ConfChange) (<-chan *string, <-chan error, <-chan *raftsnap.Snapshotter) {
     static NewRaftNodeReturnType NewRaftNode(int id,
                                             const std::vector<std::string>& peers,
                                             bool join,
@@ -52,13 +51,20 @@ private:
     RaftNode(int id,
              const std::vector<std::string>& peers,
              bool join,
-             GetSnapshotFunc_t getsnapshot_func);
+             GetSnapshotFunc_t getsnapshot_func,
+             std::promise<std::string> promise_propose,
+             std::promise<anraft::ConfChange> promise_confchange);
 
     void StartRaft();
     void ServeChannels();
     static void OnTickTimer(void *arg);
 
 private:
+    std::promise<std::string> promise_propose_;
+    std::promise<anraft::ConfChange> promise_confchange;
+    std::promise<std::string> promise_commit_;
+    std::promise<anraft::RaftError> promise_error_;
+
 	// client ID for raft session
     int id_;
 	// raft peer URLs
@@ -69,6 +75,7 @@ private:
 	std::string waldir_;
 	// path to snapshot directory
 	std::string snapdir_;
+    GetSnapshotFunc_t get_snapshot_func_;
 	// index of log at start
 	uint64_t last_index_;
 	anraft::ConfState conf_state_;
@@ -78,6 +85,15 @@ private:
 	// raft backing for the commit/error channel
     anraft::Node node_;
 	anraft::MemoryStorage& raft_storage_;
+    wal::WalPtr  wal_;
+    raftsnap::SnapshotterPtr snapshotter_;
+    std::promise<raftsnap::SnapshotterPtr> snapshotter_ready_;
+
+    uint64_t snap_count_;
+    rafthttp::TransportPtr transport_;
+    std::promise<bool> stopc_;
+    std::promise<bool> httpstopc_;
+    std::promise<bool> httpdonec_;
 };
 
 }
