@@ -23,7 +23,7 @@ void HttpApi::ServeHttpKVAPI(KvStorePtr kv_store,
                              std::promise<anraft::ConfChange> promise_confchange,
                              std::future<anraft::RaftError> future_error) {
     //start http server
-    HttpApi service(std::move(promise_confchange));
+    HttpApi service(kv_store, std::move(promise_confchange));
     brpc::Server server;
 
     // Add services into server. Notice the second parameter, because the
@@ -96,7 +96,7 @@ void HttpApi::PUT(google::protobuf::RpcController* cntl_base,
     kvstore_->Propose(key, value);
 
     //notify future
-    promise_confchange_.set_value(conf_change);
+    //promise_confchange_.set_value(conf_change); TODO
 
     // Fill response.
     cntl->http_response().set_status_code(brpc::HTTP_STATUS_NO_CONTENT);

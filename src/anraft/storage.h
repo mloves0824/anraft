@@ -21,7 +21,7 @@
 #include <vector>
 #include <cinttypes>
 #include <mutex>
-#include "raft.pb.h"
+#include "proto/raft.pb.h"
 
 namespace anraft {
 

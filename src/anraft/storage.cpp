@@ -79,6 +79,8 @@ MemoryStorage::MemoryStorage() {
 	entries_.push_back(LogEntry());
 }
 
+MemoryStorage::~MemoryStorage() {}
+
 RaftError MemoryStorage::SetHardState(HardState hs) {
 	std::lock_guard<std::mutex> lock(mutex_);
 	hard_state_ = hs;

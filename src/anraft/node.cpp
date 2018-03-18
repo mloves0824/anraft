@@ -12,4 +12,24 @@
 // See the License for the specific language governing permissions and
 // limitations under the License.
 
-// Author: chenbang (chenbang@antalk.com)
+// Author: chenbang@antalk.com
+
+#include "node.h"
+
+namespace anraft {
+
+Node& Node::StartNode(const Config& config, const std::vector<Peer> &peers) {
+
+	//TODO
+}
+
+Node::Node() {}
+
+
+void Node::Tick() {}
+
+
+} //namespace anraft
+
+
+

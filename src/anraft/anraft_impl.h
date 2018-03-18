@@ -22,7 +22,7 @@
 #include <mutex>
 #include <thread>
 #include <map>
-#include "raft.pb.h"
+#include "proto/raft.pb.h"
 #include "rocksdb/db.h"
 #include "anraft_client.h"
 #include "anraft_options.h"

@@ -24,7 +24,8 @@
 #include <brpc/restful.h>
 #include "http.pb.h"
 #include "proto/raft.pb.h"
-#include "kvstore.h"
+
+#include "../raftexample/kvstore.h"
 
 
 

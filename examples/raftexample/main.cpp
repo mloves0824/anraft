@@ -16,20 +16,21 @@
 
 #include "gflags/gflags.h"
 #include <future>
-#include "butil/strings/string_split.h"
+
 #include "httpapi.h"
 #include "kvstore.h"
 #include "raft_node.h"
+#include "butil/strings/string_split.h"
 
 DEFINE_string(cluster, "http://127.0.0.1:9021", "comma separated cluster peers");
-DEFINE_uint32(id, 1, "node ID");
-DEFINE_uint32(kvport, 9121, "key-value server port");
+DEFINE_int32(id, 1, "node ID");
+DEFINE_int32(kvport, 9121, "key-value server port");
 DEFINE_bool(join, false, "join an existing cluster");
 
 
 int main(int argc, char* argv[]) {
     // Parse gflags. We recommend you to use gflags as well.
-    GFLAGS_NAMESPACE::ParseCommandLineFlags(&argc, &argv, true);
+	google::ParseCommandLineFlags(&argc, &argv, true);
 
     std::promise<anraft::ConfChange> promise_confchange;
     std::promise<std::string> promise_propose;
@@ -40,7 +41,7 @@ int main(int argc, char* argv[]) {
     example::RaftNode::NewRaftNode(FLAGS_id, peers, FLAGS_join, NULL, std::move(promise_propose), std::move(promise_confchange));
 
     raftsnap::SnapshotterPtr snapshotter;
-    std::promise<std::string> promise_propose;
+    //std::promise<std::string> promise_propose;
     std::promise<std::string> promise_commit;
     example::KvStore::NewKVStore(snapshotter, std::move(promise_propose), std::move(promise_commit));
 

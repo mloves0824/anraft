@@ -6,6 +6,7 @@ ELSE (WIN32)
 
 	ADD_SUBDIRECTORY(src/proto)
 	ADD_SUBDIRECTORY(src/anraft)
+	ADD_SUBDIRECTORY(examples/raftexample)
 
 
 	IF (CMAKE_BUILD_TYPE MATCHES DEBUG)

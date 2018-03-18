@@ -20,7 +20,7 @@
 #include <vector>
 #include <functional>
 #include "brpc/channel.h"
-#include "raft.pb.h"
+#include "proto/raft.pb.h"
 #include "butil/logging.h"
 
 namespace anraft {

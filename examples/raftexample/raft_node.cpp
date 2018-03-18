@@ -14,12 +14,13 @@
 
 // Author: chenbang (chenbang@antalk.com)
 
+#include "../raftexample/raft_node.h"
+
 #include <functional>
 #include "bthread/bthread.h"
 #include "bthread/types.h"
 #include "bthread/unstable.h"
 #include "butil/time.h"
-#include "raft_node.h"
 
 namespace example {
 
@@ -29,15 +30,15 @@ NewRaftNodeReturnType RaftNode::NewRaftNode(int id,
                                 GetSnapshotFunc_t getsnapshot_func,
                                 std::promise<std::string> promise_propose,
                                 std::promise<anraft::ConfChange> promise_confchange) {
-    static RaftNode g_raft_node(id, peers, join, getsnapshot_func, promise_propose, promise_confchange);
+    static RaftNode g_raft_node(id, peers, join, getsnapshot_func, std::move(promise_propose), std::move(promise_confchange));
  
     bthread_t tid;
-    if (bthread_start_background(&tid, NULL, std::bind(&RaftNode::StartRaft, g_raft_node), NULL) != 0) {
+    if (bthread_start_background(&tid, NULL, RaftNode::StartRaft, NULL) != 0) {
     	LOG(ERROR) << "Fail to create bthread: StartRaft";
     	//return; TODO
     }
 
-    return make_tuple(promise_commit_, promise_error_, snapshotter_ready_);
+    return make_tuple(std::move(g_raft_node.promise_commit_), std::move(g_raft_node.promise_error_), std::move(g_raft_node.snapshotter_ready_));
 }
 
 RaftNode::RaftNode(int id,
@@ -50,14 +51,16 @@ RaftNode::RaftNode(int id,
         peers_(peers),
         join_(join),
         get_snapshot_func_(getsnapshot_func),
-        promise_propose_(promise_propose),
-        promise_confchange(promise_confchange) {
+        promise_propose_(std::move(promise_propose)),
+		promise_confchange_(std::move(promise_confchange)),
+		raft_storage_(anraft::MemoryStorage::NewMemoryStorage()) {
     snap_count_ = default_snap_count;
     waldir_ = "raftexample-" + std::to_string(id_);
     snapdir_ = "raftexample-" + std::to_string(id_) + "-snap";
+
 }
 
-void RaftNode::StartRaft() {
+void* RaftNode::StartRaft(void*) {
     //TODO: raftsnap initailization
 
     //TODO: WAL initailization

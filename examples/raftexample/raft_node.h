@@ -55,13 +55,13 @@ private:
              std::promise<std::string> promise_propose,
              std::promise<anraft::ConfChange> promise_confchange);
 
-    void StartRaft();
+    static void* StartRaft(void*);
     void ServeChannels();
     static void OnTickTimer(void *arg);
 
 private:
     std::promise<std::string> promise_propose_;
-    std::promise<anraft::ConfChange> promise_confchange;
+    std::promise<anraft::ConfChange> promise_confchange_;
     std::promise<std::string> promise_commit_;
     std::promise<anraft::RaftError> promise_error_;
 
