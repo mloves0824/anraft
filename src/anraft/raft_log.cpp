@@ -21,6 +21,11 @@ namespace anraft {
 
 static const std::string kCurrentTerm = "CURRENTTERM";
 
+RaftLog& RaftLog::GetRaftLog() {
+    static RaftLog g_raft_log;
+    return g_raft_log;
+}
+
 bool RaftLog::Open(const std::string& db_path) {
 	// Create DB
 	rocksdb::Options options;
@@ -66,4 +71,8 @@ bool RaftLog::GetMeat(const std::string& key, std::string* value) {}
 bool RaftLog::StoreLog(int64_t term, int64_t index, const std::string& log) {}
 bool RaftLog::GetLog(int64_t term, int64_t index, std::string* log) {}
 
+uint64_t RaftLog::LastIndex() {}
+uint64_t RaftLog::Append(const LogEntry& log_entry) {}
+
+void RaftLog::SetCommited(uint64_t commited) { committed_ = commited; }
 }

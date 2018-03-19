@@ -19,16 +19,20 @@
 
 #include <functional>
 #include "config.h"
+#include "raft_log.h"
 
 namespace anraft {
 
-    typedef std::function<void()> TickFunc_t;
+typedef std::function<void()> TickFunc_t;
+// StateType represents the role of a node in a cluster.
+typedef  uint64_t StateType;
 
 class Raft {
 public:
-    static Raft& NewRaft(Config& config);
+    static Raft& NewRaft(const Config& config);
     void BecomeFollower(uint64_t term, uint64_t lead);
 
+    void AddNode(uint64_t id);
 private:
     Raft(Config& config);
 
@@ -38,6 +42,8 @@ private:
 private:
     uint64_t id_;
     TickFunc_t tick_;
+
+    RaftLog& raftlog_;
 };
 
 } //namespace anraft

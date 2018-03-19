@@ -29,6 +29,7 @@
 #include "raftsnap/snapshotter.h"
 #include "wal/wal.h"
 #include "rafthttp/transport.h"
+#include "butil/memory/singleton.h"
 
 namespace example {
     
@@ -38,7 +39,7 @@ typedef std::tuple<std::promise<std::string>, std::promise<anraft::RaftError>,  
 const uint64_t default_snap_count = 10000;
 
 
-class RaftNode {
+class RaftNode : Singleton<RaftNode> {
 public:
     static NewRaftNodeReturnType NewRaftNode(int id,
                                             const std::vector<std::string>& peers,
@@ -57,6 +58,8 @@ private:
 
     static void* StartRaft(void*);
     void ServeChannels();
+    void ServeRaft();
+
     static void OnTickTimer(void *arg);
 
 private:
