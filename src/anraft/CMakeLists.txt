@@ -15,6 +15,7 @@ ELSE(WIN32)
 			protobuf
 			pthread
 			dl
+			${PROJECT_SOURCE_DIR}/../../third/rocksdb/lib/librocksdb.so
 		)
 		MESSAGE(STATUS "${PROJECT_OUTNAME} is VERSION: debug_linux_x64")
 

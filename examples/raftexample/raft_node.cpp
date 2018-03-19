@@ -66,7 +66,7 @@ void* RaftNode::StartRaft(void* arg) {
     //get arg
     if (!arg) {
         LOG(ERROR) << "arg is null";
-        return;
+        return nullptr;
     }
     RaftNode* raft_node = (RaftNode*)arg;
 
@@ -74,10 +74,10 @@ void* RaftNode::StartRaft(void* arg) {
     butil::File::Error error;
     butil::FilePath path(raft_node->snapdir_);
     butil::FilePath dir = path.DirName();
-    if (!butil::CreateDirectoryAndGetError(dir, &error) && error != FILE_ERROR_EXISTS) {
+    if (!butil::CreateDirectoryAndGetError(dir, &error) && error != butil::File::FILE_ERROR_EXISTS) {
         LOG(ERROR) << "Fail to create directory=`" << dir.value()
             << "', " << error;
-        return;
+        return nullptr;
     }
 
     //TODO: WAL initailization

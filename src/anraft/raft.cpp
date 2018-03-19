@@ -13,3 +13,15 @@
 // limitations under the License.
 
 // Author: chenbang (chenbang@antalk.com)
+
+#include "raft.h"
+
+namespace anraft {
+
+Raft& Raft::NewRaft(const Config& config) {}
+
+void Raft::BecomeFollower(uint64_t term, uint64_t lead) {}
+
+void Raft::AddNode(uint64_t id) {}
+
+} //namespace anraft

@@ -69,7 +69,7 @@ Node& Node::StartNode(const Config& config, const std::vector<Peer> &peers) {
     //    //return; TODO
     //}
 
-    bthread::execution_queue_start(&raft.queue_id_,
+    bthread::execution_queue_start(&node.queue_id_,
                                     NULL,
                                     Node::Run,
                                     (void*)&node);
@@ -84,11 +84,12 @@ Node& Node::RestartNode(const Config& config) {
 
 Node::Node() {}
 
+Node& Node::operator=(const Node&) {}
 
 void Node::Tick() {}
 
 
-int Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter) {
+int Node::Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter) {
     Node* node = (Node*)meta;
     if (iter.is_queue_stopped()) {
         //node->do_shutdown(); //TODO

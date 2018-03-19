@@ -117,13 +117,14 @@ public:
     // and heartbeat timeouts are in units of ticks.
     void Tick();
 
+    bthread::ExecutionQueueId<NodeRecvMsg> GetQueueID();
 private:
-    static void* Run(void*);
     static int Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter);
 
 
 public:  //TODO to private
     Node();
+    Node& operator=(const Node&);
 
 private:
     std::future<Ready> future_ready_;

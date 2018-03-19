@@ -44,6 +44,7 @@ ELSE(WIN32)
 		${PROJECT_SOURCE_DIR}/
 		${PROJECT_SOURCE_DIR}/../common/proto
 		${PROJECT_SOURCE_DIR}/../../third/mbrpc/include
+		${PROJECT_SOURCE_DIR}/../../third/rocksdb/include
 		${PROJECT_SOURCE_DIR}/../../src/
 	)
 

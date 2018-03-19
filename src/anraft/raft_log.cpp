@@ -26,6 +26,9 @@ RaftLog& RaftLog::GetRaftLog() {
     return g_raft_log;
 }
 
+RaftLog::RaftLog() {}
+RaftLog::~RaftLog() {}
+
 bool RaftLog::Open(const std::string& db_path) {
 	// Create DB
 	rocksdb::Options options;
