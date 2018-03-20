@@ -31,6 +31,13 @@ KvStorePtr KvStore::NewKVStore(raftsnap::SnapshotterPtr snapshotter,
 
 void KvStore::Propose(const std::string& key, const std::string& value) {}
 
-int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter) {}
+int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter) {
+	KvStore* kv = (KvStore*)meta;
+    if (iter.is_queue_stopped()) {
+        //kv->do_shutdown(); //TODO
+        return 0;
+    }
+
+}
 
 } //namespace example
