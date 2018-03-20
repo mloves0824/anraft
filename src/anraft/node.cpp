@@ -86,7 +86,13 @@ Node::Node() {}
 
 Node& Node::operator=(const Node&) {}
 
-void Node::Tick() {}
+void Node::Tick() {
+    NodeRecvMsg msg;
+    msg.type = MsgTypeTick;
+    if (bthread::execution_queue_execute(queue_id_, msg) != 0) {
+        return;
+    }
+}
 
 
 int Node::Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter) {
@@ -99,10 +105,15 @@ int Node::Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter) {
     for (; iter; ++iter) {
         switch (iter->type) {
         case MsgTypeProp:
+            Message* msg = (Message*)iter->body;
+            msg->set_from(Raft::GetRaft().GetID());
+            Raft::GetRaft().Step(msg);
             break;
         case MsgTypeReady:
             break;
 
+        case MsgTypeTick:
+            break;
         }
     }
 }

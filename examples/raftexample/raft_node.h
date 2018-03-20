@@ -29,6 +29,8 @@
 #include "raftsnap/snapshotter.h"
 #include "wal/wal.h"
 #include "rafthttp/transport.h"
+#include <bthread/execution_queue.h>
+
 
 namespace example {
     
@@ -36,6 +38,19 @@ typedef std::function< std::tuple<std::vector<uint8_t>, anraft::RaftError>() > G
 typedef std::tuple<std::promise<std::string>, std::promise<anraft::RaftError>,  std::promise<raftsnap::SnapshotterPtr> > NewRaftNodeReturnType;
 
 const uint64_t default_snap_count = 10000;
+
+
+enum ChannalType {
+    ChannalTypeTick = 0,
+    ChannalTypeReady,
+    ChannalTypeTransportError,
+    ChannalTypeStop
+};
+
+struct ChannalMsg {
+    ChannalType type;
+    void* body;
+};
 
 
 class RaftNode {
@@ -56,10 +71,13 @@ private:
              std::promise<anraft::ConfChange> promise_confchange);
 
     static void* StartRaft(void*);
-    void ServeChannels();
+    void StartServeChannels();
     void ServeRaft();
+    bool PublishEntries(std::vector<anraft::LogEntry>& ents);
 
     static void OnTickTimer(void *arg);
+    static int ServeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter);
+
 
 private:
     std::promise<std::string> promise_propose_;
@@ -96,6 +114,9 @@ private:
     std::promise<bool> stopc_;
     std::promise<bool> httpstopc_;
     std::promise<bool> httpdonec_;
+
+    bthread::ExecutionQueueId<ChannalMsg> queue_id_;
+
 };
 
 }

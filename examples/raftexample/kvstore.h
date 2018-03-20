@@ -23,11 +23,18 @@
 #include <map>
 #include <mutex>
 #include "raftsnap/snapshotter.h"
+#include <bthread/execution_queue.h>
+
 
 namespace example {
 
 class KvStore;
 typedef std::shared_ptr<KvStore> KvStorePtr;
+
+struct KvStoreChannalMsg {
+    std::string body;
+};
+
 
 class KvStore {
 public:
@@ -35,12 +42,17 @@ public:
                                  std::promise<std::string> promise_propose,
                                  std::promise<std::string> promise_commit);
     void Propose(const std::string& key, const std::string& value);
+private:
+    static int ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter);
 
 private:
     std::promise<std::string> promise_propose_;
     raftsnap::SnapshotterPtr snapshotter_;
     std::map<std::string, std::string> kv_store_;
     std::mutex mutex_;
+
+    bthread::ExecutionQueueId<KvStoreChannalMsg> queue_id_;
+
 };
 
 

@@ -90,7 +90,8 @@ private:
 };
 
 enum NodeRecvMsgType {
-    MsgTypeProp = 0,
+    MsgTypeTick = 0,
+    MsgTypeProp = 1,
     MsgTypeReady
 };
 

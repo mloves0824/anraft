@@ -20,9 +20,17 @@ namespace example {
 
 KvStorePtr KvStore::NewKVStore(raftsnap::SnapshotterPtr snapshotter,
                              std::promise<std::string> promise_propose,
-                             std::promise<std::string> promise_commit) {}
+                             std::promise<std::string> promise_commit) {
+
+    static KvStore kv;
+    bthread::execution_queue_start(&kv.queue_id_,
+                                    NULL,
+                                    KvStore::ReadCommits,
+                                    (void*)&kv);
+}
 
 void KvStore::Propose(const std::string& key, const std::string& value) {}
 
+int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter) {}
 
 } //namespace example

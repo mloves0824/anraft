@@ -20,8 +20,109 @@ namespace anraft {
 
 Raft& Raft::NewRaft(const Config& config) {}
 
-void Raft::BecomeFollower(uint64_t term, uint64_t lead) {}
+Raft& GetRaft() {}
+
+void Raft::BecomeFollower(uint64_t term, uint64_t lead) {
+    step_func_ = Raft::StepFollower;
+    Reset(term);
+    tick_func_ = Raft::TickElection;
+}
+
+void Raft::Reset(uint64_t term) {
+
+}
 
 void Raft::AddNode(uint64_t id) {}
+
+RaftError Raft::Step(Message* msg) {
+    // Handle the message term, which may result in our stepping down to a follower.
+
+    uint64_t term = msg->term();
+    if (term == 0) {
+        // local message
+    }
+    else if (term > term_) {
+    
+    }
+    else {
+        
+    }
+
+    switch (msg->type()) {
+    case MsgHup:
+        if (state_ != StateLeader) {
+            
+            if (pre_vote_) {
+            }
+            else
+            {
+                Campaign(CampaignElection);
+            }
+        }
+        else {
+            //r.logger.Debugf("%x ignoring MsgHup because already leader", r.id)
+        }
+        break;
+    }
+
+    return ErrNone;
+}
+
+
+void Raft::TickElection() {
+    election_elapsed_++;
+
+    if (Promotable() && PastElectionTimeout()) { //TODO
+        election_elapsed_ = 0;
+        Message msg;
+        msg.set_type(MsgHup);
+        msg.set_from(id_);
+        Step(&msg);
+    }
+}
+
+
+void Raft::Campaign(CampaignType t) {
+    uint64_t term;
+    MessageType msg_type;
+
+    if (t == CampaignPreElection) {}
+    else {
+        BecomeCandidate();
+        msg_type = MsgVote;
+        term = term_;
+    }
+
+    if (Quorum() && Poll()) {
+        return;
+    }
+
+    for (auto &x : prs_) {
+        if (x.first == id_) continue;
+
+        //r.logger.Infof("%x [logterm: %d, index: %d] sent %s request to %x at term %d", //TODO
+
+        if (t == CampaignTransfer) {}
+
+        Message msg;
+        msg.set_term(term);
+        msg.set_to(x.first);
+        msg.set_type(msg_type);
+        //msg.set_index();
+        //msg.set_logterm();
+        //msg.set_context();
+
+        Send(msg);
+    }
+
+}
+
+void Raft::BecomeCandidate() {}
+
+void Raft::Send(Message& msg) {
+    msg.set_from(id_);
+
+    msgs_.push(msg);
+}
 
 } //namespace anraft

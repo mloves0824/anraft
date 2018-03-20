@@ -99,7 +99,7 @@ void* RaftNode::StartRaft(void* arg) {
     }
 }
 
-void RaftNode::ServeChannels() {
+void RaftNode::StartServeChannels() {
     //start tick timer
     bthread_timer_t timer_id = 0;
     int64_t election_timeout_ = 0;
@@ -110,7 +110,36 @@ void RaftNode::ServeChannels() {
         LOG(ERROR) << "Fail to add timer: " << berror(rc);
         return;
     }
+
+    bthread::execution_queue_start(&queue_id_,
+                                    NULL,
+                                    RaftNode::ServeChannels,
+                                    (void*)this);
 }
+
+int RaftNode::ServeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter) {
+    RaftNode* raftnode = (RaftNode*)meta;
+    if (iter.is_queue_stopped()) {
+        //node->do_shutdown(); //TODO
+        return 0;
+    }
+
+    for (; iter; ++iter) {
+        switch (iter->type) {
+        case ChannalTypeReady:
+            //保存HardState, Entries到持久化存储中(wal)
+            //处理snapshot
+            //添加Entries到本地raftStorage中(需要区分raft内部的raftLog)
+            //发送Messages给Follower
+            //把committedEntries通过commitC暴露给用户用于应用到State Machine中
+            //看看当前状态是否需要触发snapshot操作
+            //告诉raft我们处理完了一批Ready
+            break;
+
+        }
+    }
+}
+
 
 void RaftNode::ServeRaft() {
     std::string host;
@@ -126,5 +155,18 @@ void RaftNode::OnTickTimer(void *arg) {
     if (raftnode)
         raftnode->node_.Tick();
 }
+
+
+bool RaftNode::PublishEntries(std::vector<anraft::LogEntry>& ents) {
+    for (auto &x : ents) {
+        if (x.type() == anraft::EntryNormal) {
+            if (x.data().empty())
+                continue;
+
+
+        } else {}
+    }
+}
+
 
 } //namespace example
