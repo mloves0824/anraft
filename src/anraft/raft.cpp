@@ -20,13 +20,16 @@ namespace anraft {
 
 Raft& Raft::NewRaft(const Config& config) {}
 
-Raft& GetRaft() {}
+Raft& Raft::GetRaft() {}
 
 void Raft::BecomeFollower(uint64_t term, uint64_t lead) {
     step_func_ = Raft::StepFollower;
     Reset(term);
-    tick_func_ = Raft::TickElection;
+    tick_func_ = std::bind(&Raft::TickElection, this);
 }
+
+
+RaftError Raft::StepFollower(Raft*, Message*) {}
 
 void Raft::Reset(uint64_t term) {
 
@@ -116,6 +119,11 @@ void Raft::Campaign(CampaignType t) {
     }
 
 }
+
+bool Raft::Promotable() {}
+bool Raft::PastElectionTimeout() {}
+bool Raft::Quorum() {}
+bool Raft::Poll() {}
 
 void Raft::BecomeCandidate() {}
 

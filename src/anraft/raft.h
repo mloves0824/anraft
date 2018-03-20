@@ -22,14 +22,14 @@
 #include "config.h"
 #include "raft_log.h"
 #include "progress.h"
+#include "proto/raft.pb.h"
 
 namespace anraft {
 
-typedef std::function<void()> TickFunc_t;
+class Raft;
+typedef std::function<void(void)> TickFunc_t;
 typedef std::function<RaftError(Raft*, Message*)> StepFunc_t;
 // StateType represents the role of a node in a cluster.
-typedef  uint64_t StateType;
-
 // Possible values for StateType.
 enum StateType {
     StateFollower = 0,

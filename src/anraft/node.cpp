@@ -102,10 +102,11 @@ int Node::Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter) {
         return 0;
     }
 
+    Message* msg = (Message*)iter->body;
+
     for (; iter; ++iter) {
         switch (iter->type) {
         case MsgTypeProp:
-            Message* msg = (Message*)iter->body;
             msg->set_from(Raft::GetRaft().GetID());
             Raft::GetRaft().Step(msg);
             break;
