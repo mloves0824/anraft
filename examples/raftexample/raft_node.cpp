@@ -52,10 +52,17 @@ bool RaftNode::Init(int id,
     peers_ = peers;
     join_ = join;
     get_snapshot_func_ = getsnapshot_func;
+    return true;
 }
 
 bool RaftNode::Start() {
-    
+    bthread_t tid;
+    if (bthread_start_background(&tid, NULL, RaftNode::StartRaft, this) != 0) {
+    	LOG(ERROR) << "Fail to create bthread: StartRaft";
+    	return false;
+    }
+
+    return true;
 }
 
 RaftNode& RaftNode::Instance() {
@@ -81,6 +88,8 @@ RaftNode::RaftNode(int id,
     snapdir_ = "raftexample-" + std::to_string(id_) + "-snap";
 
 }
+
+RaftNode::RaftNode() : raft_storage_(anraft::MemoryStorage::NewMemoryStorage()) {}
 
 void* RaftNode::StartRaft(void* arg) {
     //get arg
@@ -117,6 +126,11 @@ void* RaftNode::StartRaft(void* arg) {
         }
         raft_node->node_ = anraft::Node::StartNode(config, peers);
     }
+
+
+    raft_node->ServeRaft();
+    raft_node->StartServeChannels();
+    return nullptr;
 }
 
 void RaftNode::StartServeChannels() {
@@ -151,17 +165,17 @@ int RaftNode::ServeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter)
     }
 
     for (; iter; ++iter) {
-        switch (iter->type) {
+        switch (iter->type()) {
         case ChannalTypeReady:
-            //±£´æHardState, Entriesµ½³Ö¾Ã»¯´æ´¢ÖÐ(wal)
-            //´¦Àísnapshot
-            //Ìí¼ÓEntriesµ½±¾µØraftStorageÖÐ(ÐèÒªÇø·ÖraftÄÚ²¿µÄraftLog)
-            //·¢ËÍMessages¸øFollower
-            //°ÑcommittedEntriesÍ¨¹ýcommitC±©Â¶¸øÓÃ»§ÓÃÓÚÓ¦ÓÃµ½State MachineÖÐ
-            //¿´¿´µ±Ç°×´Ì¬ÊÇ·ñÐèÒª´¥·¢snapshot²Ù×÷
-            //¸æËßraftÎÒÃÇ´¦ÀíÍêÁËÒ»ÅúReady
+            //ï¿½ï¿½ï¿½ï¿½HardState, Entriesï¿½ï¿½ï¿½Ö¾Ã»ï¿½ï¿½æ´¢ï¿½ï¿½(wal)
+            //ï¿½ï¿½ï¿½ï¿½snapshot
+            //ï¿½ï¿½ï¿½Entriesï¿½ï¿½ï¿½ï¿½ï¿½ï¿½raftStorageï¿½ï¿½(ï¿½ï¿½Òªï¿½ï¿½ï¿½raftï¿½Ú²ï¿½ï¿½ï¿½raftLog)
+            //ï¿½ï¿½ï¿½ï¿½Messagesï¿½ï¿½Follower
+            //ï¿½ï¿½committedEntriesÍ¨ï¿½ï¿½commitCï¿½ï¿½Â¶ï¿½ï¿½ï¿½Ã»ï¿½ï¿½ï¿½ï¿½ï¿½Ó¦ï¿½Ãµï¿½State Machineï¿½ï¿½
+            //ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ç°×´Ì¬ï¿½Ç·ï¿½ï¿½ï¿½Òªï¿½ï¿½ï¿½ï¿½snapshotï¿½ï¿½ï¿½ï¿½
+            //ï¿½ï¿½ï¿½ï¿½raftï¿½ï¿½ï¿½Ç´ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½ï¿½Ò»ï¿½ï¿½Ready
             std::vector<anraft::LogEntry> ents;
-            PublishEntries(ents);
+            raftnode->PublishEntries(ents);
             break;
 
         }
@@ -180,7 +194,7 @@ int RaftNode::ServeProposeChannels(void* meta, bthread::TaskIterator<ChannalMsg>
     }
 
     for (; iter; ++iter) {
-        switch (iter->type) {
+        switch (iter->type()) {
         case ChannalTypePropose:
             if (raftnode)
                 raftnode->node_.Propose(iter->propose());

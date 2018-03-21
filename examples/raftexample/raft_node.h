@@ -74,6 +74,8 @@ public:
               GetSnapshotFunc_t getsnapshot_func);
     bool Start();
 
+    void Propose(const std::string& buf);
+
 private:
     RaftNode(int id,
              const std::vector<std::string>& peers,
@@ -81,6 +83,7 @@ private:
              GetSnapshotFunc_t getsnapshot_func,
              std::promise<std::string> promise_propose,
              std::promise<anraft::ConfChange> promise_confchange);
+    RaftNode();
 
     static void* StartRaft(void*);
     void StartServeChannels();
@@ -90,7 +93,6 @@ private:
     static void OnTickTimer(void *arg);
     static int ServeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter);
     static int ServeProposeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter);
-    void Propose(const std::string& buf);
 
 private:
     std::promise<std::string> promise_propose_;

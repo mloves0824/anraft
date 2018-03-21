@@ -39,7 +39,9 @@ int main(int argc, char* argv[]) {
     std::vector<std::string> peers;
     butil::SplitString(FLAGS_cluster, ',', &peers);
     example::RaftNode::Instance().Init(FLAGS_id, peers, FLAGS_join, NULL);
-    example::RaftNode::Instance().Start();
+    if (!example::RaftNode::Instance().Start()) {
+    	return -1;
+    }
 
     raftsnap::SnapshotterPtr snapshotter;
     //std::promise<std::string> promise_propose;

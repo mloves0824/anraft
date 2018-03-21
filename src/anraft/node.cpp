@@ -99,7 +99,7 @@ bool Node::Propose(const std::string& data) {
     msg.type = MsgTypeProp;
     msg.body = (void*)&data; //TODO
     if (bthread::execution_queue_execute(queue_id_, msg) != 0) {
-        return;
+        return false;
     }
 }
 

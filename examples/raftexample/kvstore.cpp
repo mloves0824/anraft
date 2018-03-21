@@ -34,10 +34,10 @@ void KvStore::Propose(const std::string& key, const std::string& value) {
     KV kv;
     kv.set_key(key);
     kv.set_val(value);
-    string buf;
+    std::string buf;
     kv.SerializeToString(&buf);
 
-    RaftNode::GetRaftNode().Propose(buf);
+    RaftNode::Instance().Propose(buf);
 }
 
 int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter) {
@@ -52,7 +52,7 @@ int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& i
 
         KV kv;
         if (!kv.ParseFromString(iter->body)) { }   //TODO
-        kv_store_[kv.key()] = kv.val();
+        //kv->kv_store_[kv.key()] = kv.val();
     }
 
 }
