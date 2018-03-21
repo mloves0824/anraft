@@ -30,6 +30,7 @@
 #include "wal/wal.h"
 #include "rafthttp/transport.h"
 #include <bthread/execution_queue.h>
+#include "raftexample.pb.h"
 
 
 namespace example {
@@ -40,17 +41,21 @@ typedef std::tuple<std::promise<std::string>, std::promise<anraft::RaftError>,  
 const uint64_t default_snap_count = 10000;
 
 
-enum ChannalType {
-    ChannalTypeTick = 0,
-    ChannalTypeReady,
-    ChannalTypeTransportError,
-    ChannalTypeStop
-};
-
-struct ChannalMsg {
-    ChannalType type;
-    void* body;
-};
+//enum ChannalType {
+//    ChannalTypeTick = 0,
+//    ChannalTypeReady,
+//    ChannalTypeTransportError,
+//    ChannalTypeStop,
+//
+//    //for Propose
+//    ChannalTypePropose,
+//    ChannalTypeConfChange
+//};
+//
+//struct ChannalMsg {
+//    ChannalType type;
+//    void* body;
+//};
 
 
 class RaftNode {
@@ -61,6 +66,13 @@ public:
                                             GetSnapshotFunc_t getsnapshot_func,
                                             std::promise<std::string> promise_propose,
                                             std::promise<anraft::ConfChange> promise_confchange);
+
+    static RaftNode& Instance();
+    bool Init(int id,
+              const std::vector<std::string>& peers,
+              bool join,
+              GetSnapshotFunc_t getsnapshot_func);
+    bool Start();
 
 private:
     RaftNode(int id,
@@ -77,7 +89,8 @@ private:
 
     static void OnTickTimer(void *arg);
     static int ServeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter);
-
+    static int ServeProposeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter);
+    void Propose(const std::string& buf);
 
 private:
     std::promise<std::string> promise_propose_;
@@ -116,6 +129,7 @@ private:
     std::promise<bool> httpdonec_;
 
     bthread::ExecutionQueueId<ChannalMsg> queue_id_;
+    bthread::ExecutionQueueId<ChannalMsg> propose_queue_id_;
 
 };
 

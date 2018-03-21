@@ -43,6 +43,26 @@ NewRaftNodeReturnType RaftNode::NewRaftNode(int id,
     return make_tuple(std::move(g_raft_node.promise_commit_), std::move(g_raft_node.promise_error_), std::move(g_raft_node.snapshotter_ready_));
 }
 
+
+bool RaftNode::Init(int id,
+                    const std::vector<std::string>& peers,
+                    bool join,
+                    GetSnapshotFunc_t getsnapshot_func) {
+    id_ = id;
+    peers_ = peers;
+    join_ = join;
+    get_snapshot_func_ = getsnapshot_func;
+}
+
+bool RaftNode::Start() {
+    
+}
+
+RaftNode& RaftNode::Instance() {
+    static RaftNode g_raft_node;
+    return g_raft_node;
+}
+
 RaftNode::RaftNode(int id,
                    const std::vector<std::string>& peers,
                    bool join,
@@ -111,6 +131,12 @@ void RaftNode::StartServeChannels() {
         return;
     }
 
+
+    bthread::execution_queue_start(&propose_queue_id_,
+                                    NULL,
+                                    RaftNode::ServeProposeChannels,
+                                    (void*)this);
+
     bthread::execution_queue_start(&queue_id_,
                                     NULL,
                                     RaftNode::ServeChannels,
@@ -134,12 +160,45 @@ int RaftNode::ServeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter)
             //把committedEntries通过commitC暴露给用户用于应用到State Machine中
             //看看当前状态是否需要触发snapshot操作
             //告诉raft我们处理完了一批Ready
+            std::vector<anraft::LogEntry> ents;
+            PublishEntries(ents);
             break;
 
         }
     }
 }
 
+
+
+
+
+int RaftNode::ServeProposeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter) {
+    RaftNode* raftnode = (RaftNode*)meta;
+    if (iter.is_queue_stopped()) {
+        //node->do_shutdown(); //TODO
+        return 0;
+    }
+
+    for (; iter; ++iter) {
+        switch (iter->type) {
+        case ChannalTypePropose:
+            if (raftnode)
+                raftnode->node_.Propose(iter->propose());
+            break;
+
+        }
+    }
+}
+
+
+void RaftNode::Propose(const std::string& buf) {
+    ChannalMsg msg;
+    msg.set_type(ChannalTypePropose);
+    msg.set_propose(buf);
+    if (bthread::execution_queue_execute(propose_queue_id_, msg) != 0) {
+        return;
+    }
+}
 
 void RaftNode::ServeRaft() {
     std::string host;

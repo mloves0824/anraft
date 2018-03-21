@@ -24,6 +24,7 @@
 #include <mutex>
 #include "raftsnap/snapshotter.h"
 #include <bthread/execution_queue.h>
+#include "kvstore.pb.h"
 
 
 namespace example {

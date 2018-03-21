@@ -1,0 +1,20 @@
+syntax="proto2";
+package example;
+
+option cc_generic_services = true;
+
+enum ChannalType {
+    ChannalTypeTick = 0;
+    ChannalTypeReady = 1;
+    ChannalTypeTransportError = 2;
+    ChannalTypeStop = 3;
+
+    //for Propose
+    ChannalTypePropose = 4;
+    ChannalTypeConfChange = 5;
+}
+
+message ChannalMsg {
+    required ChannalType type = 1;
+    optional bytes propose = 2;
+};

@@ -15,6 +15,7 @@
 // Author: chenbang (chenbang@antalk.com)
 
 #include "kvstore.h"
+#include "raft_node.h"
 
 namespace example {
 
@@ -29,13 +30,29 @@ KvStorePtr KvStore::NewKVStore(raftsnap::SnapshotterPtr snapshotter,
                                     (void*)&kv);
 }
 
-void KvStore::Propose(const std::string& key, const std::string& value) {}
+void KvStore::Propose(const std::string& key, const std::string& value) {
+    KV kv;
+    kv.set_key(key);
+    kv.set_val(value);
+    string buf;
+    kv.SerializeToString(&buf);
+
+    RaftNode::GetRaftNode().Propose(buf);
+}
 
 int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter) {
 	KvStore* kv = (KvStore*)meta;
     if (iter.is_queue_stopped()) {
         //kv->do_shutdown(); //TODO
         return 0;
+    }
+
+    for (; iter; ++iter) {
+        if (iter->body.empty()) {}
+
+        KV kv;
+        if (!kv.ParseFromString(iter->body)) { }   //TODO
+        kv_store_[kv.key()] = kv.val();
     }
 
 }

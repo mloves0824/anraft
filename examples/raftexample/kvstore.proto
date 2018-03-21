@@ -1,0 +1,9 @@
+syntax="proto2";
+package example;
+
+option cc_generic_services = true;
+
+message KV {
+    required bytes key = 1;
+    required bytes val = 2;
+};

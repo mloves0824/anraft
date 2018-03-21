@@ -94,6 +94,15 @@ void Node::Tick() {
     }
 }
 
+bool Node::Propose(const std::string& data) {
+    NodeRecvMsg msg;
+    msg.type = MsgTypeProp;
+    msg.body = (void*)&data; //TODO
+    if (bthread::execution_queue_execute(queue_id_, msg) != 0) {
+        return;
+    }
+}
+
 
 int Node::Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter) {
     Node* node = (Node*)meta;

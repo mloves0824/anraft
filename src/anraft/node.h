@@ -117,8 +117,12 @@ public:
     // Tick increments the internal logical clock for this Node. Election timeouts
     // and heartbeat timeouts are in units of ticks.
     void Tick();
+    bool Propose(const std::string& data);
+
 
     bthread::ExecutionQueueId<NodeRecvMsg> GetQueueID();
+
+
 private:
     static int Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter);
 
