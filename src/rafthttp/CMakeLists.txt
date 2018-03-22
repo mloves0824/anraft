@@ -1,23 +1,20 @@
 CMAKE_MINIMUM_REQUIRED(VERSION 2.8)
-PROJECT(RAFREXAMPLE)
-SET(PROJECT_OUTNAME raftexample)
+PROJECT(RAFTHTTP)
+SET(PROJECT_OUTNAME rafthttp)
+ADD_DEFINITIONS(-DRAFTHTTP_LIBRARY)
+
 
 IF (WIN32)
 ELSE(WIN32)
 	IF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 		ADD_DEFINITIONS(-DDEBUG)
 		SET(CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} -std=c++11 -g -fshort-wchar")
-		SET(PROJECT_LIB_DIR ${PROJECT_SOURCE_DIR}/../../../ops/output/debug/debug_linux_x64/dep)
-		SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../ops/output/debug/debug_linux_x64/app)
+		SET(PROJECT_LIB_DIR ${PROJECT_SOURCE_DIR}/../../ops/output/debug/debug_linux_x64/dep)
+		SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../ops/output/debug/debug_linux_x64/dep)
 		SET(PROJECT_LIBS_PLATFORM
 			protobuf
-			proto
-			gflags
 			pthread
 			dl
-			anraft
-			rafthttp
-			${PROJECT_SOURCE_DIR}/../../third/mbrpc/lib/libbrpc.so
 		)
 		MESSAGE(STATUS "${PROJECT_OUTNAME} is VERSION: debug_linux_x64")
 
@@ -40,18 +37,19 @@ ELSE(WIN32)
 	ENDIF (CMAKE_BUILD_TYPE MATCHES DEBUG)
 
 	aux_source_directory(./ PROJECT_SRCS)
+	aux_source_directory(./pb PROJECT_SRCS)
+	
 
 	INCLUDE_DIRECTORIES(
 		${PROJECT_SOURCE_DIR}/
-		${PROJECT_SOURCE_DIR}/../common/proto
-		${PROJECT_SOURCE_DIR}/../../third/mbrpc/include
-		${PROJECT_SOURCE_DIR}/../../third/rocksdb/include
-		${PROJECT_SOURCE_DIR}/../../src/
+		${PROJECT_SOURCE_DIR}/../../third/mbrpc/include	
+		${PROJECT_SOURCE_DIR}/../
+			
 	)
 
 	LINK_DIRECTORIES(${PROJECT_LIB_DIR})
 
-	ADD_EXECUTABLE(${PROJECT_OUTNAME} ${PROJECT_SRCS})
+	ADD_LIBRARY(${PROJECT_OUTNAME} ${PROJECT_SRCS})
 	TARGET_LINK_LIBRARIES(${PROJECT_OUTNAME} ${PROJECT_LIBS_PLATFORM})
 	#ADD_DEPENDENCIES(${PROJECT_OUTNAME}    )
 ENDIF (WIN32)

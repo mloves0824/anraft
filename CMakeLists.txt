@@ -5,6 +5,7 @@ IF (WIN32)
 ELSE (WIN32)
 
 	ADD_SUBDIRECTORY(src/proto)
+	ADD_SUBDIRECTORY(src/rafthttp)	
 	ADD_SUBDIRECTORY(src/anraft)
 	ADD_SUBDIRECTORY(examples/raftexample)
 

@@ -25,6 +25,9 @@
 
 namespace rafthttp {
 
+class Transport;
+typedef std::shared_ptr<Transport> TransportPtr;
+
 //type Raft interface {
 //    Process(ctx context.Context, m raftpb.Message) error
 //        IsIDRemoved(id uint64) bool
@@ -51,6 +54,9 @@ public:
               Raft *raft,
               raftsnap::SnapshotterPtr snapshotter);
     bool Start();
+    PeerPtr StartPeer(TransportPtr transport,
+					  const std::vector<std::string>& urls,
+					  uint64_t peer_id);
 
     void AddPeer(uint64_t id, const std::vector<std::string>& urls);
     bool Send(const anraft::Message& msg);
@@ -87,7 +93,6 @@ private:
     //TLS TODO
 };
 
-typedef std::shared_ptr<Transport> TransportPtr;
 
 } //namespace rafthttp
 

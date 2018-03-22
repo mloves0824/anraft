@@ -24,6 +24,8 @@
 
 namespace rafthttp {
 
+
+
 // peer is the representative of a remote raft node. Local raft node sends
 // messages to the remote through peer.
 // Each peer has two underlying mechanisms to send out a message: stream and
@@ -37,20 +39,18 @@ namespace rafthttp {
 // It is only used when the stream has not been established.
 class Peer {
 public:
-    static PeerPtr StartPeer(TransportPtr transport,
-                             const std::vector<std::string>& urls,
-                             uint64_t peer_id);
 
     static int ServePropose(void* meta, bthread::TaskIterator<anraft::Message>& iter);
     static int ServeRecv(void* meta, bthread::TaskIterator<anraft::Message>& iter);
 
+    bthread::ExecutionQueueId<anraft::Message>* GetRecvQueue() {return recv_queue_id_;}
+    bthread::ExecutionQueueId<anraft::Message>* GetPropQueue() {return prop_queue_id_;}
 
 private:
-    bthread::ExecutionQueueId<anraft::Message> recv_queue_id_;
-    bthread::ExecutionQueueId<anraft::Message> prop_queue_id_;
+    bthread::ExecutionQueueId<anraft::Message>* recv_queue_id_;
+    bthread::ExecutionQueueId<anraft::Message>* prop_queue_id_;
 
 };
-
 typedef std::shared_ptr<Peer> PeerPtr;
 
 } //namespace rafthttp

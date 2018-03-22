@@ -18,31 +18,7 @@
 
 namespace rafthttp {
 
-PeerPtr Peer::StartPeer(TransportPtr transport,
-                        const std::vector<std::string>& urls,
-                        uint64_t peer_id) {
-    //TODO chenbang: pipeline.start()
-
-    //create peer ant init
-    PeerPtr peer(new Peer());
-
-    //start bthread for recv_queue_id_
-    bthread::execution_queue_start(&recv_queue_id_,
-                                    NULL,
-                                    Peer::ServeRecv,
-                                    (void*)peer);
-
-    //start bthread for prop_queue_id_
-    // r.Process might block for processing proposal when there is no leader.
-    // Thus propc must be put into a separate routine with recvc to avoid blocking
-    // processing other raft messages.
-    bthread::execution_queue_start(&prop_queue_id_,
-                                    NULL,
-                                    Peer::ServePropose,
-                                    (void*)peer);
-
-    //TODO chenbang: p.msgAppReader.start()
-
-}
+int Peer::ServePropose(void* meta, bthread::TaskIterator<anraft::Message>& iter) {}
+int Peer::ServeRecv(void* meta, bthread::TaskIterator<anraft::Message>& iter) {}
 
 } //namespace rafthttp

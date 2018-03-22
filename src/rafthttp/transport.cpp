@@ -15,6 +15,7 @@
 // Author: chenbang (chenbang@antalk.com)
 
 #include "transport.h"
+#include "stream.h"
 
 namespace rafthttp {
 
@@ -35,11 +36,39 @@ bool Transport::Init(uint64_t id,
     snapshotter_ = snapshotter;
 }
 
+PeerPtr Transport::StartPeer(TransportPtr transport,
+				             const std::vector<std::string>& urls,
+				             uint64_t peer_id) {
+    //TODO chenbang: pipeline.start()
+
+    //create peer ant init
+    PeerPtr peer(new Peer());
+
+    //start bthread for recv_queue_id_
+    bthread::execution_queue_start(peer->GetRecvQueue(),
+                                    NULL,
+                                    Peer::ServeRecv,
+                                    (void*)peer.get());
+
+    //start bthread for prop_queue_id_
+    // r.Process might block for processing proposal when there is no leader.
+    // Thus propc must be put into a separate routine with recvc to avoid blocking
+    // processing other raft messages.
+    bthread::execution_queue_start(peer->GetPropQueue(),
+                                    NULL,
+                                    Peer::ServePropose,
+                                    (void*)peer.get());
+
+    //TODO chenbang: p.msgAppReader.start()
+    StreamWriter::Start(urls[peer_id-1]);
+    StreamReader::Start(1000);//TODO
+}
+
 bool Transport::Start() {}
 
 void Transport::AddPeer(uint64_t id, const std::vector<std::string>& urls) {
     
-    peers_[id] = Peer::StartPeer(shared_from_this(), urls, id);
+    peers_[id] = StartPeer(shared_from_this(), urls, id);
 }
 
 bool Transport::Send(const anraft::Message& msg) {}

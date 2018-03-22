@@ -1,0 +1,12 @@
+syntax="proto2";
+package rafthttp;
+
+option cc_generic_services = true;
+
+message HttpRequest {};
+message HttpResponse {};
+
+service StreamHttpService {
+  rpc Get(HttpRequest) returns (HttpResponse);
+};
+

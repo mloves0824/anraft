@@ -23,6 +23,7 @@
 #include "butil/time.h"
 #include "butil/file_util.h"
 #include "brpc/uri.h"
+#include "rafthttp/transport.h"
 
 namespace example {
 
@@ -127,6 +128,17 @@ void* RaftNode::StartRaft(void* arg) {
         raft_node->node_ = anraft::Node::StartNode(config, peers);
     }
 
+    rafthttp::Transport::Instance().Init(raft_node->id_,
+										 raft_node->peers_,
+										 0x1000,
+										 raft_node,
+										 nullptr);
+    rafthttp::Transport::Instance().Start();
+    for (int i = 0; i < raft_node->peers_.size(); i++) {
+    	if (i + 1 != raft_node->id_) {
+    		rafthttp::Transport::Instance().AddPeer(i + 1,  raft_node->peers_);
+    	}
+    }
 
     raft_node->ServeRaft();
     raft_node->StartServeChannels();
