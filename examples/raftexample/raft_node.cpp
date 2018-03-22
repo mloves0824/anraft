@@ -214,6 +214,8 @@ void RaftNode::Propose(const std::string& buf) {
     }
 }
 
+anraft::RaftError RaftNode::Process(anraft::Message msg) {}
+
 void RaftNode::ServeRaft() {
     std::string host;
     int port, parse_error;

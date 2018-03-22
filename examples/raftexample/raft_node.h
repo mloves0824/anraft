@@ -31,6 +31,7 @@
 #include "rafthttp/transport.h"
 #include <bthread/execution_queue.h>
 #include "raftexample.pb.h"
+#include "rafthttp/transport.h"
 
 
 namespace example {
@@ -58,7 +59,7 @@ const uint64_t default_snap_count = 10000;
 //};
 
 
-class RaftNode {
+class RaftNode :public rafthttp::Raft {
 public:
     static NewRaftNodeReturnType NewRaftNode(int id,
                                             const std::vector<std::string>& peers,
@@ -75,6 +76,8 @@ public:
     bool Start();
 
     void Propose(const std::string& buf);
+    virtual anraft::RaftError Process(anraft::Message);
+
 
 private:
     RaftNode(int id,
