@@ -17,4 +17,5 @@ enum ChannalType {
 message ChannalMsg {
     required ChannalType type = 1;
     optional bytes propose = 2;
+    optional bytes ready = 3;
 };

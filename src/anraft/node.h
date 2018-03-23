@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <future>
+#include <functional>
 #include "config.h"
 #include "raft.h"
 #include "proto/raft.pb.h"
@@ -26,6 +27,8 @@
 
 
 namespace anraft {
+
+typedef std::functional<bool(const Message&)> ExecuteReadyCallbackFunc_t; 
 
 struct Peer {
     uint64_t id;
@@ -91,8 +94,13 @@ private:
 
 enum NodeRecvMsgType {
     MsgTypeTick = 0,
-    MsgTypeProp = 1,
-    MsgTypeReady
+    MsgTypeProp,
+    MsgTypeRecv, 
+    MsgTypeConf,
+    MsgTypeAdvance,
+    MsgTypeReady,
+    MsgTypeStatus,
+    MsgTypeStop
 };
 
 struct NodeRecvMsg {
@@ -112,7 +120,12 @@ public:
     // has been applied to it; otherwise use zero.
     static Node& RestartNode(const Config& config);
 
-
+    static Node& Instance();
+    bool Init(const Config& config, 
+              const std::vector<Peer> &peers, 
+              ExecuteReadyCallbackFunc_t callback
+              bool restart_flag = false);
+    bool Start();
 
     // Tick increments the internal logical clock for this Node. Election timeouts
     // and heartbeat timeouts are in units of ticks.
@@ -133,8 +146,10 @@ public:  //TODO to private
 
 private:
     std::future<Ready> future_ready_;
+    Config config_;
+    std::vector<Peer> peers_;
     bthread::ExecutionQueueId<NodeRecvMsg> queue_id_;
-
+    ExecuteReadyCallbackFunc_t execute_ready_callback_;
 };
 
 

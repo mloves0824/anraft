@@ -77,6 +77,7 @@ public:
 
     void Propose(const std::string& buf);
     virtual anraft::RaftError Process(anraft::Message);
+    bool RaftNode::ExecuteReady(const anraft::Message);
 
 
 private:

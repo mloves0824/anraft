@@ -140,7 +140,7 @@ void* RaftNode::StartRaft(void* arg) {
     	}
     }
 
-    raft_node->ServeRaft();
+    //raft_node->ServeRaft();
     raft_node->StartServeChannels();
     return nullptr;
 }
@@ -179,15 +179,19 @@ int RaftNode::ServeChannels(void* meta, bthread::TaskIterator<ChannalMsg>& iter)
     for (; iter; ++iter) {
         switch (iter->type()) {
         case ChannalTypeReady:
-            //����HardState, Entries���־û��洢��(wal)
-            //����snapshot
-            //���Entries������raftStorage��(��Ҫ���raft�ڲ���raftLog)
-            //����Messages��Follower
-            //��committedEntriesͨ��commitC��¶���û�����Ӧ�õ�State Machine��
-            //������ǰ״̬�Ƿ���Ҫ����snapshot����
-            //����raft���Ǵ�������һ��Ready
+            //TODO: rc.wal.Save(rd.HardState, rd.Entries)
+            //TODO: Snapshot
+            //TODO: rc.raftStorage.Append(rd.Entries)
             std::vector<anraft::LogEntry> ents;
             raftnode->PublishEntries(ents);
+            //transport_->Send();
+            //rc.transport.Send(rd.Messages)
+            //    if ok : = rc.publishEntries(rc.entriesToApply(rd.CommittedEntries)); !ok{
+            //        rc.stop()
+            //        return
+            //    }
+            //TODO:    rc.maybeTriggerSnapshot()
+            //TODO:    rc.node.Advance()
             break;
 
         }
@@ -255,5 +259,17 @@ bool RaftNode::PublishEntries(std::vector<anraft::LogEntry>& ents) {
     }
 }
 
+
+bool RaftNode::ExecuteReady(const anraft::Message& msg) {
+    ChannalMsg msg;
+    msg.set_type(ChannalTypePropose);
+    std::string body;
+    msg.SerializeToString(&body);
+    msg.set_ready(body);
+    if (bthread::execution_queue_execute(queue_id_, msg) != 0) {
+        return false;
+    }
+    return true;
+}
 
 } //namespace example
