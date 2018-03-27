@@ -28,7 +28,7 @@
 
 namespace anraft {
 
-typedef std::functional<bool(const Message&)> ExecuteReadyCallbackFunc_t; 
+typedef std::function<bool(const Message&)> ExecuteReadyCallbackFunc_t;
 
 struct Peer {
     uint64_t id;
@@ -123,7 +123,7 @@ public:
     static Node& Instance();
     bool Init(const Config& config, 
               const std::vector<Peer> &peers, 
-              ExecuteReadyCallbackFunc_t callback
+              ExecuteReadyCallbackFunc_t callback,
               bool restart_flag = false);
     bool Start();
 

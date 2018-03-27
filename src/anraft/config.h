@@ -27,6 +27,7 @@ class Config { //TODO
 
 
 public:
+	Config() : storage_(anraft::MemoryStorage::NewMemoryStorage()) {}
     Config(uint64_t id,
            int election_tick,
            int heartbeat_tick,

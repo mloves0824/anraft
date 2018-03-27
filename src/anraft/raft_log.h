@@ -53,6 +53,10 @@ public:
     uint64_t Append(const LogEntry& log_entry);
 
     void SetCommited(uint64_t commited);
+    bool IsUpToDate(uint64_t last_index, uint64_t term);
+
+private:
+    uint64_t LastTerm();
 
 private:
 

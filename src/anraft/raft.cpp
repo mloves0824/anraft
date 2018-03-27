@@ -52,7 +52,7 @@ void Raft::BecomeLeader() {
 
     step_func_ = Raft::StepLeader;
     Reset(term_);
-    tick_func_ = Raft::TickHeatbeat;
+    tick_func_ = std::bind(&Raft::TickHeatbeat, this);
     lead_ = id_;
     state_ = StateLeader;
 
@@ -219,6 +219,40 @@ RaftError Raft::Step(Message* msg) {
         }
         break;
 
+    case MsgVote:
+    case MsgPreVote:
+    	if (is_learner_) {
+			// TODO: learner may need to vote, in case of node down when confchange.
+			// TODO: r.logger.Infof("%x [logterm: %d, index: %d, vote: %x] ignored %s from %x [logterm: %d, index: %d] at term %d: learner can not vote",
+			//	r.id, r.raftLog.lastTerm(), r.raftLog.lastIndex(), r.Vote, m.Type, m.From, m.LogTerm, m.Index, r.Term)
+			return ErrNone;
+    	}
+
+		// The m.Term > r.Term clause is for MsgPreVote. For MsgVote m.Term should
+		// always equal r.Term.
+    	if ((vote_ == 0 || vote_ == msg->from() || msg->term() > term_) && raftlog_.IsUpToDate(msg->index(), msg->term())) {
+//		TODO:	r.logger.Infof("%x [logterm: %d, index: %d, vote: %x] cast %s for %x [logterm: %d, index: %d] at term %d",
+//				r.id, r.raftLog.lastTerm(), r.raftLog.lastIndex(), r.Vote, m.Type, m.From, m.LogTerm, m.Index, r.Term)
+			// When responding to Msg{Pre,}Vote messages we include the term
+			// from the message, not the local term. To see why consider the
+			// case where a single node was previously partitioned away and
+			// it's local term is now of date. If we include the local term
+			// (recall that for pre-votes we don't update the local term), the
+			// (pre-)campaigning node on the other end will proceed to ignore
+			// the message (it ignores all out of date messages).
+			// The term in the original message and current local term are the
+			// same in the case of regular votes, but different for pre-votes.
+    		Message resp_msg;
+    		resp_msg.set_to(msg->from());
+    		resp_msg.set_term(msg->term());
+    		resp_msg.set_type(VoteRespMsgType(msg->type()));
+    		if (msg->type() == MsgVote) {
+    			vote_ = msg->from();
+    			election_elapsed_ = 0;
+    		}
+    	}
+    	break;
+
     default:
         return step_func_(this, msg);
     }
@@ -247,7 +281,7 @@ void Raft::TickElection() {
     }
 }
 
-void Raft::TickHeatbeat() {
+void Raft::TickHeatbeat(void) {
     election_elapsed_++;
     heartbeat_elapsed_++;
 
@@ -389,5 +423,12 @@ bool Raft::CheckQuorumActive() {
 }
 
 void Raft::AppendEntry(const ::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries) {}
+
+MessageType Raft::VoteRespMsgType(MessageType vote) {
+	if (vote == MsgVote) {
+		return MsgVoteResp;
+	} else
+		return MsgPreVoteResp;
+}
 
 } //namespace anraft

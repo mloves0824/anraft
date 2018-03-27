@@ -261,12 +261,12 @@ bool RaftNode::PublishEntries(std::vector<anraft::LogEntry>& ents) {
 
 
 bool RaftNode::ExecuteReady(const anraft::Message& msg) {
-    ChannalMsg msg;
-    msg.set_type(ChannalTypePropose);
+    ChannalMsg channel_msg;
+    channel_msg.set_type(ChannalTypePropose);
     std::string body;
     msg.SerializeToString(&body);
-    msg.set_ready(body);
-    if (bthread::execution_queue_execute(queue_id_, msg) != 0) {
+    //channel_msg.set_ready(body);
+    if (bthread::execution_queue_execute(queue_id_, channel_msg) != 0) {
         return false;
     }
     return true;

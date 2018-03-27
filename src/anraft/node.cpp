@@ -82,14 +82,14 @@ Node& Node::RestartNode(const Config& config) {
 }
 
 Node& Node::Instance() {
-    static Node& g_node;
+    static Node g_node;
     return g_node;
 }
 
 bool Node::Init(const Config& config,
                 const std::vector<Peer> &peers,
-                ExecuteReadyCallbackFunc_t callback
-                bool restart_flag = false) {
+                ExecuteReadyCallbackFunc_t callback,
+                bool restart_flag) {
 
 }
 

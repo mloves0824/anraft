@@ -53,7 +53,6 @@ enum CampaignType {
 };
 
 
-
 class Raft {
 public:
     static Raft& NewRaft(const Config& config);
@@ -88,7 +87,7 @@ private:
 
     // TickElection is run by followers and candidates after electionTimeout.
     void TickElection();
-    void TickHeatbeat();
+    void TickHeatbeat(void);
     static RaftError StepFollower(Raft*, Message*);
     // stepCandidate is shared by StateCandidate and StatePreCandidate; the difference is
     // whether they respond to MsgVoteResp or MsgPreVoteResp.
@@ -119,6 +118,7 @@ private:
     void AppendEntry(const ::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries);
 
     void ForEachProgress(std::function<void(uint64_t, Progress)>);
+    static MessageType VoteRespMsgType(MessageType vote);
 private:
     uint64_t id_;
     uint64_t term_;
@@ -126,6 +126,7 @@ private:
     StateType state_;
     bool pre_vote_;
     bool check_quorum_;
+    bool is_learner_;
     std::map<uint64_t, Progress> prs_;
     std::map<uint64_t, Progress> learner_prs_;
     std::map<uint64_t, bool> votes_;
