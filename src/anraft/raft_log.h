@@ -17,6 +17,7 @@
 #ifndef SOURCE_DIRECTORY__SRC_ANRAFT_RAFT_LOG_H_
 #define SOURCE_DIRECTORY__SRC_ANRAFT_RAFT_LOG_H_
 
+#include <tuple>
 #include "rocksdb/db.h"
 #include "proto/raft.pb.h"
 
@@ -28,6 +29,9 @@ public:
 public:
 	RaftLog();
 	virtual ~RaftLog();
+
+    // slice returns a slice of log entries from lo through hi-1, inclusive.
+    std::tuple<anraft::RaftError, anraft::LogEntry> Slice(uint64_t lo, uint64_t hi, uint64_t max_size);
 
 	bool Open(const std::string& db_path);
 

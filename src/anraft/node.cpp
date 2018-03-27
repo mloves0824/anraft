@@ -187,7 +187,15 @@ int Node::Run(void* meta, bthread::TaskIterator<NodeRecvMsg>& iter) {
         case MsgTypeReady:
             break;
 
+        case MsgTypeRecv:
+            // filter out response message from unknown From.
+            if (Raft::GetRaft().GetProgress(msg->from()) || Raft::IsResponseMsg(msg->type())) {
+                Raft::GetRaft().Step(msg);
+            }
+            break;
+
         case MsgTypeTick:
+            Raft::GetRaft().Tick();
             break;
         }
     }

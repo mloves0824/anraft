@@ -11,6 +11,8 @@ enum RaftError {
 	ErrSnapOutOfDate = 2;
 	ErrUnavailable   = 3;
 	ErrSnapshotTemporarilyUnavailable = 4;
+    ErrProposalDropped = 5;
+    ErrParam           = 6;
 }
 
 

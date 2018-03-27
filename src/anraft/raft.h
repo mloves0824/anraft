@@ -23,6 +23,7 @@
 #include "raft_log.h"
 #include "progress.h"
 #include "proto/raft.pb.h"
+#include "read_only.h"
 
 namespace anraft {
 
@@ -59,35 +60,83 @@ public:
     static Raft& GetRaft();
     void BecomeFollower(uint64_t term, uint64_t lead);
     void BecomeCandidate();
+    void BecomeLeader();
+
+    // bcastAppend sends RPC, with entries to all peers that are not up-to-date
+    // according to the progress recorded in r.prs.
+    void BcastAppend();
+    // bcastHeartbeat sends RPC, without entries to all the peers.
+    void BcastHeartbeat();
+    void BcastHeartbeatWithCtx(const std::string& ctx);
 
     void AddNode(uint64_t id);
     uint64_t GetID() const { return id_; }
 
     RaftError Step(Message* msg);
+    void Tick();
+    Progress* GetProgress(uint64_t id);
+    int Poll(uint64_t id, MessageType type, bool vote);
+    
+    //utils
+    static bool IsResponseMsg(MessageType type);
 
+    void Send(Message&);
+    // sendHeartbeat sends an empty MsgApp
+    void SendHeartbeat(uint64_t to, const std::string& ctx);
 private:
     Raft(Config& config);
 
     // TickElection is run by followers and candidates after electionTimeout.
     void TickElection();
+    void TickHeatbeat();
     static RaftError StepFollower(Raft*, Message*);
+    // stepCandidate is shared by StateCandidate and StatePreCandidate; the difference is
+    // whether they respond to MsgVoteResp or MsgPreVoteResp.
+    static RaftError StepCandidate(Raft*, Message*);
+    static RaftError StepLeader(Raft*, Message*);
+
+
     void Reset(uint64_t term);
+    // promotable indicates whether state machine can be promoted to leader,
+    // which is true when its own id is in progress list.
     bool Promotable();
+    // pastElectionTimeout returns true if r.electionElapsed is greater
+    // than or equal to the randomized election timeout in
+    // [electiontimeout, 2 * electiontimeout - 1].
     bool PastElectionTimeout();
+    void ResetRandomizedElectionTimeout();
     void Campaign(CampaignType t);
     bool Quorum();
     bool Poll();
-    void Send(Message&);
 
 
+    // checkQuorumActive returns true if the quorum is active from
+    // the view of the local raft state machine. Otherwise, it returns
+    // false.
+    // checkQuorumActive also resets all RecentActive to false.
+    bool CheckQuorumActive();
+
+    void AppendEntry(const ::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries);
+
+    void ForEachProgress(std::function<void(uint64_t, Progress)>);
 private:
     uint64_t id_;
     uint64_t term_;
+    uint64_t vote_;
     StateType state_;
     bool pre_vote_;
+    bool check_quorum_;
     std::map<uint64_t, Progress> prs_;
+    std::map<uint64_t, Progress> learner_prs_;
+    std::map<uint64_t, bool> votes_;
 
     std::queue<Message> msgs_;
+
+    // the leader id
+    uint64_t lead_;
+    // leadTransferee is id of the leader transfer target when its value is not zero.
+    // Follow the procedure defined in raft thesis 3.10.
+    uint64_t lead_transferee_;
 
     TickFunc_t tick_func_;
     StepFunc_t step_func_;
@@ -97,6 +146,17 @@ private:
     // number of ticks since it reached last electionTimeout or received a
     // valid message from current leader when it is a follower.
     int election_elapsed_;
+
+    // number of ticks since it reached last heartbeatTimeout.
+    // only leader keeps heartbeatElapsed.
+    int heartbeat_elapsed_;
+
+    int heartbeat_timeout_;
+    int election_timeout_;
+    // randomizedElectionTimeout is a random number between
+    // [electiontimeout, 2 * electiontimeout - 1]. It gets reset
+    // when raft changes its state to follower or candidate.
+    int randomized_election_timeout_;
 
     RaftLog& raftlog_;
 };

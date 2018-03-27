@@ -78,4 +78,8 @@ uint64_t RaftLog::LastIndex() {}
 uint64_t RaftLog::Append(const LogEntry& log_entry) {}
 
 void RaftLog::SetCommited(uint64_t commited) { committed_ = commited; }
+
+std::tuple<anraft::RaftError, anraft::LogEntry> RaftLog::Slice(uint64_t lo, uint64_t hi, uint64_t max_size) {
+
+}
 }
