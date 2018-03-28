@@ -19,10 +19,39 @@
 
 namespace anraft {
 
+enum ProgressStateType {
+    ProgressStateProbe = 0,
+    ProgressStateReplicate,
+    ProgressStateSnapshot
+};
+
 // Progress represents a follower¡¯s progress in the view of the leader. Leader maintains
 // progresses of all followers, and sends entries to the follower based on its progress.
 class Progress {
+public:
+    // IsPaused returns whether sending log entries to this node has been
+    // paused. A node may be paused because it has rejected recent
+    // MsgApps, is currently waiting for a snapshot, or has reached the
+    // MaxInflightMsgs limit.
+    bool IsPaused();
 
+private:
+    // State defines how the leader should interact with the follower.
+    //
+    // When in ProgressStateProbe, leader sends at most one replication message
+    // per heartbeat interval. It also probes actual progress of the follower.
+    //
+    // When in ProgressStateReplicate, leader optimistically increases next
+    // to the latest entry sent after sending replication message. This is
+    // an optimized state for fast replicating log entries to the follower.
+    //
+    // When in ProgressStateSnapshot, leader should have sent out snapshot
+    // before and stops sending any replication message.
+    ProgressStateType state_;
+
+    // Paused is used in ProgressStateProbe.
+    // When Paused is true, raft should pause sending replication message to this peer.
+    bool paused_;
 
 };
 

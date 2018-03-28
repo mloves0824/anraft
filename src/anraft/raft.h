@@ -82,6 +82,8 @@ public:
     void Send(Message&);
     // sendHeartbeat sends an empty MsgApp
     void SendHeartbeat(uint64_t to, const std::string& ctx);
+    // sendAppend sends RPC, with entries to the given peer.
+    void SendAppend(uint64_t to);
 private:
     Raft(Config& config);
 

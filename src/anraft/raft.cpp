@@ -75,7 +75,15 @@ void Raft::BecomeLeader() {
     //        r.logger.Infof("%x became leader at term %d", r.id, r.Term)
 }
 
-void Raft::BcastAppend() {}
+void Raft::BcastAppend() {
+    ForEachProgress([=](uint64_t id, Progress p)
+    {
+        if (id = this->GetID())
+            return;
+        this->SendAppend(id);
+    });
+}
+
 void Raft::BcastHeartbeat() {
     std::string ctx = ReadOnly::Instance().LastPendingRequestCtx();
     BcastHeartbeatWithCtx(ctx);
@@ -336,7 +344,7 @@ Progress* Raft::GetProgress(uint64_t id) {
         return &prs_[id];
     }
 
-    return &learner_prs_[id];
+    return &learner_prs_[id]; //TODO: empty process
 }
 
 
@@ -415,6 +423,18 @@ void Raft::SendHeartbeat(uint64_t to, const std::string& ctx) {
     msg.set_commit(commit);
     msg.set_context(ctx);
     this->Send(msg);
+}
+
+void Raft::SendAppend(uint64_t to) {
+    Progress* pr = GetProgress(to);
+    if (!pr)
+        return;
+    if (pr->IsPaused())
+        return;
+
+    Message msg;
+    msg.set_to(to);
+    //TODO:
 }
 
 
