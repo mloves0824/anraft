@@ -20,12 +20,18 @@
 #include <tuple>
 #include "rocksdb/db.h"
 #include "proto/raft.pb.h"
+#include "storage.h"
+#include "raft_log.h"
+#include "log_unstable.h"
 
 namespace anraft {
 
 class RaftLog {
 public:
     static RaftLog& GetRaftLog();
+    // newLog returns log using the given storage. It recovers the log to the state
+    // that it just commits and applies the latest snapshot.
+    bool NewLog(Storage *storage);
 public:
 	RaftLog();
 	virtual ~RaftLog();
@@ -51,6 +57,8 @@ public:
 
     uint64_t LastIndex();
     uint64_t Append(const LogEntry& log_entry);
+    uint64_t Append(const std::vector<LogEntry>& log_entry);
+
 
     void SetCommited(uint64_t commited);
     bool IsUpToDate(uint64_t last_index, uint64_t term);
@@ -59,18 +67,21 @@ private:
     uint64_t LastTerm();
 
 private:
+    // storage contains all stable entries since the last snapshot.
+    Storage *storage_;
 
     // unstable contains all unstable entries and snapshot.
     // they will be saved into storage.
-    //unstable unstable
+    Unstable unstable_;
 
     // committed is the highest log position that is known to be in
     // stable storage on a quorum of nodes.
     uint64_t committed_;
+
     // applied is the highest log position that the application has
     // been instructed to apply to its state machine.
     // Invariant: applied <= committed
-    //applied uint64
+    uint64_t applied_;
 
 	//log[] log entries; each entry contains command
 	//	    for state machine, and term when entry

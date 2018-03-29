@@ -29,6 +29,28 @@ RaftLog& RaftLog::GetRaftLog() {
 RaftLog::RaftLog() {}
 RaftLog::~RaftLog() {}
 
+bool RaftLog::NewLog(Storage *storage) {
+    if (!storage)
+        return false;
+
+    storage_ = storage;
+
+    auto fi_ret = storage_->FirstIndex();
+    if (std::get<1>(fi_ret) != ErrNone)
+        return false;
+    auto first_index = std::get<0>(fi_ret);
+
+    auto li_ret = storage_->LastIndex();
+    if (std::get<1>(li_ret) != ErrNone)
+        return false;
+    auto last_index = std::get<0>(li_ret);
+
+    unstable_.SetOffset(last_index + 1);
+    // Initialize our committed and applied pointers to the time of the last compaction.
+    committed_ = first_index - 1;
+    applied_ = first_index - 1;
+}
+
 bool RaftLog::Open(const std::string& db_path) {
 	// Create DB
 	rocksdb::Options options;
@@ -74,9 +96,32 @@ bool RaftLog::GetMeat(const std::string& key, std::string* value) {}
 bool RaftLog::StoreLog(int64_t term, int64_t index, const std::string& log) {}
 bool RaftLog::GetLog(int64_t term, int64_t index, std::string* log) {}
 
-uint64_t RaftLog::LastIndex() {}
+uint64_t RaftLog::LastIndex() {
+    int64_t i = unstable_.MaybeLastIndex();
+    if (i >= 0)
+        return (uint64_t)i;
+
+    auto li_ret = storage_->LastIndex();
+    if (std::get<li_ret>(1) != ErrNone) {
+        //TODO: panic
+    }
+    return std::get<li_ret>(0);
+}
+
 uint64_t RaftLog::LastTerm() {}
 uint64_t RaftLog::Append(const LogEntry& log_entry) {}
+
+uint64_t RaftLog::Append(const std::vector<LogEntry>& entries) {
+    if (entries.empty())
+        return LastIndex();
+
+    auto after = entries[0].index() - 1;
+    if (after < committed_) {
+        //TODO: l.logger.Panicf("after(%d) is out of range [committed(%d)]", after, l.committed)
+    }
+    unstable_.TruncateAndAppend(entries);
+    return LastIndex();
+}
 
 void RaftLog::SetCommited(uint64_t commited) { committed_ = commited; }
 

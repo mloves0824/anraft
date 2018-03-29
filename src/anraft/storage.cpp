@@ -57,11 +57,13 @@ std::tuple<uint64_t, RaftError> MemoryStorage::Term(uint64_t i) {
 }
 
 std::tuple<uint64_t, RaftError> MemoryStorage::LastIndex() {
-	return std::make_tuple(1, ErrNone);
+    auto index = entries_[0].index() + entries_.size() - 1;
+    return std::make_tuple(index, ErrNone);
 }
 
 std::tuple<uint64_t, RaftError> MemoryStorage::FirstIndex() {
-	return std::make_tuple(1, ErrNone);
+    auto index = entries_[0].index() + 1 ;
+	return std::make_tuple(index, ErrNone);
 }
 
 std::tuple<Snapshot, RaftError> MemoryStorage::SnapShot() {
