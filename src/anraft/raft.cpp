@@ -179,7 +179,7 @@ RaftError Raft::StepLeader(Raft* raft, Message* msg) {
         //                }
         //        }
         //    }
-        raft->AppendEntry(msg->entries());
+        raft->AppendEntry(const_cast<::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& >(msg->entries()));
         raft->BcastAppend();
         break;
     }
@@ -442,7 +442,16 @@ bool Raft::CheckQuorumActive() {
 
 }
 
-void Raft::AppendEntry(const ::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries) {}
+void Raft::AppendEntry(::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries) {
+	uint64_t li = raftlog_.LastIndex();
+
+	int i = 0;
+	for (auto iter = entries.begin(); iter != entries.end(); iter++, i++) {
+		iter->set_term(term_);
+		iter->set_index(li + 1 + i);
+	}
+
+}
 
 MessageType Raft::VoteRespMsgType(MessageType vote) {
 	if (vote == MsgVote) {

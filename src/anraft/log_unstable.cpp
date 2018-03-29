@@ -13,3 +13,13 @@
 // limitations under the License.
 
 // Author: chenbang (chenbang@antalk.com)
+
+#include "log_unstable.h"
+
+namespace anraft {
+
+int64_t Unstable::MaybeLastIndex() {}
+
+void Unstable::TruncateAndAppend(std::vector<LogEntry> entries) {}
+
+} //namespace anraft

@@ -117,7 +117,7 @@ private:
     // checkQuorumActive also resets all RecentActive to false.
     bool CheckQuorumActive();
 
-    void AppendEntry(const ::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries);
+    void AppendEntry(::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries);
 
     void ForEachProgress(std::function<void(uint64_t, Progress)>);
     static MessageType VoteRespMsgType(MessageType vote);

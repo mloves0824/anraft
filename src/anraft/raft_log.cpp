@@ -102,10 +102,10 @@ uint64_t RaftLog::LastIndex() {
         return (uint64_t)i;
 
     auto li_ret = storage_->LastIndex();
-    if (std::get<li_ret>(1) != ErrNone) {
+    if (std::get<1>(li_ret) != ErrNone) {
         //TODO: panic
     }
-    return std::get<li_ret>(0);
+    return std::get<0>(li_ret);
 }
 
 uint64_t RaftLog::LastTerm() {}
