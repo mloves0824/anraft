@@ -20,6 +20,31 @@ namespace anraft {
 
 int64_t Unstable::MaybeLastIndex() {}
 
-void Unstable::TruncateAndAppend(std::vector<LogEntry> entries) {}
+void Unstable::TruncateAndAppend(std::vector<LogEntry> entries) {
+    if (entries.empty())
+        return;
+    uint64_t after = entries[0].index();
+
+    if (after == (offset_ + entries_.size())) {
+        // after is the next index in the u.entries
+        // directly append
+        entries_.insert(entries_.end(), entries.begin(), entries.end());
+    }
+    else if (after <= offset_) {
+        //ODO: u.logger.Infof("replace the unstable entries from index %d", after)
+            // The log is being truncated to before our current offset
+            // portion, so set the offset and replace the entries
+        offset_ = after;
+        entries_ = entries;
+    }
+    else {
+        // truncate to after and copy to u.entries
+        // then append
+        //u.logger.Infof("truncate the unstable entries before index %d", after)
+        std::vector<LogEntry> temp;
+        temp.insert(temp.begin(), entries_.begin() + offset_, entries_.begin()+after);
+        entries_.swap(temp);
+    }
+}
 
 } //namespace anraft

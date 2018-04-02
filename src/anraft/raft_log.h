@@ -62,9 +62,11 @@ public:
 
     void SetCommited(uint64_t commited);
     bool IsUpToDate(uint64_t last_index, uint64_t term);
+    std::tuple<anraft::RaftError, uint64_t> Term(uint64_t i);
 
 private:
     uint64_t LastTerm();
+    uint64_t FirstIndex();
 
 private:
     // storage contains all stable entries since the last snapshot.

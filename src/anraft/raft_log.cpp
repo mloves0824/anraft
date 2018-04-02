@@ -142,4 +142,56 @@ bool RaftLog::IsUpToDate(uint64_t last_index, uint64_t term) {
 	return term > this->LastTerm() || (term == this->LastTerm() && last_index > this->LastIndex());
 }
 
+
+//func(l *raftLog) term(i uint64) (uint64, error) {
+//    // the valid term range is [index of dummy entry, last index]
+//dummyIndex: = l.firstIndex() - 1
+//    if i < dummyIndex || i > l.lastIndex() {
+//        // TODO: return an error instead?
+//        return 0, nil
+//    }
+//
+//            if t, ok : = l.unstable.maybeTerm(i); ok{
+//                return t, nil
+//            }
+//
+//            t, err : = l.storage.Term(i)
+//            if err == nil{
+//                return t, nil
+//            }
+//            if err == ErrCompacted || err == ErrUnavailable{
+//                return 0, err
+//            }
+//            panic(err) // TODO(bdarnell)
+//}
+
+std::tuple<anraft::RaftError, uint64_t> RaftLog::Term(uint64_t index) {
+    // the valid term range is [index of dummy entry, last index]
+    uint64_t dummy_index = FirstIndex() - 1;
+    if (index < dummy_index || index > LastIndex()) {
+        //        // TODO: return an error instead?
+        //        return 0, nil
+        return std::make_tuple<RaftError, uint64_t>(ErrNone, 0);
+    }
+
+    //if (unstable_)
+}
+
+//func(l *raftLog) firstIndex() uint64{
+//    if i, ok : = l.unstable.maybeFirstIndex(); ok{
+//        return i
+//    }
+//    index, err : = l.storage.FirstIndex()
+//    if err != nil{
+//        panic(err) // TODO(bdarnell)
+//    }
+//    return index
+//}
+
+uint64_t RaftLog::FirstIndex() {
+    //if ()
+}
+
+
+
 }

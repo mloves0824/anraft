@@ -435,6 +435,10 @@ void Raft::SendAppend(uint64_t to) {
     Message msg;
     msg.set_to(to);
     //TODO:
+
+    //term, errt : = r.raftLog.term(pr.Next - 1)
+    //    ents, erre : = r.raftLog.entries(pr.Next, r.maxMsgSize)
+    uint64_t term = raftlog_.GetCurrentTerm();
 }
 
 
