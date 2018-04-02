@@ -67,7 +67,17 @@ public:
 private:
     uint64_t LastTerm();
     uint64_t FirstIndex();
+    // maybeAppend returns (0, false) if the entries cannot be appended. Otherwise,
+    // it returns (last index of new entries, true).
+    //func (l *raftLog) maybeAppend(index, logTerm, committed uint64, ents ...pb.Entry) (lastnewi uint64, ok bool) {
 
+    //func (l *raftLog) matchTerm(i, term uint64) bool {
+    bool MatchTerm(uint64_t index, uint64_t term);
+
+    RaftError MustCheckOutOfBounds(uint64_t lo, uint64_t hi);
+    RaftError Slice(uint64_t lo, uint64_t hi, uint64_t max_size, std::vector<LogEntry>& entries);
+    RaftError Entries(uint64_t index, uint64_t max_size, std::vector<LogEntry>& entries);
+    RaftError AllEntries(std::vector<LogEntry>& entries);
 private:
     // storage contains all stable entries since the last snapshot.
     Storage *storage_;

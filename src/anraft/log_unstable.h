@@ -19,6 +19,7 @@
 
 #include <vector>
 #include <stdint.h>
+#include <tuple>
 #include "proto/raft.pb.h"
 
 namespace anraft {
@@ -34,10 +35,16 @@ public:
     // unstable entry or snapshot.
     //func(u *unstable) maybeLastIndex() (uint64, bool)
     // < 0 means error
-    int64_t MaybeLastIndex();
+    std::tuple<uint64_t, bool> MaybeLastIndex();
 
     //func(u *unstable) truncateAndAppend(ents[]pb.Entry) {
     void TruncateAndAppend(std::vector<LogEntry> entries);
+
+    // maybeFirstIndex returns the index of the first possible entry in entries
+    // if it has a snapshot.
+    std::tuple<uint64_t, bool> MaybeFirstIndex();
+    uint64_t Offset() {return offset_;}
+    void Slice(uint64_t lo, uint64_t hi, std::vector<LogEntry>& entries);
 
 private:
     // the incoming unstable snapshot, if any.

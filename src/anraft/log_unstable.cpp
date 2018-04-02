@@ -18,7 +18,27 @@
 
 namespace anraft {
 
-int64_t Unstable::MaybeLastIndex() {}
+// maybeLastIndex returns the last index if it has at least one
+// unstable entry or snapshot.
+//func (u *unstable) maybeLastIndex() (uint64, bool) {
+//	if l := len(u.entries); l != 0 {
+//		return u.offset + uint64(l) - 1, true
+//	}
+//	if u.snapshot != nil {
+//		return u.snapshot.Metadata.Index, true
+//	}
+//	return 0, false
+//}
+
+std::tuple<uint64_t, bool> Unstable::MaybeLastIndex() {
+	if(!entries_.empty()) { //TODO: why offset_ + entries_.size() - 1 ???
+		return std::make_tuple<uint64_t, bool>(offset_ + entries_.size() - 1, true);
+	}
+
+	//TODO: snapshot
+
+	return std::make_tuple<uint64_t, bool>(0, false);
+}
 
 void Unstable::TruncateAndAppend(std::vector<LogEntry> entries) {
     if (entries.empty())
@@ -46,5 +66,38 @@ void Unstable::TruncateAndAppend(std::vector<LogEntry> entries) {
         entries_.swap(temp);
     }
 }
+
+
+// maybeFirstIndex returns the index of the first possible entry in entries
+// if it has a snapshot.
+//func (u *unstable) maybeFirstIndex() (uint64, bool) {
+//	if u.snapshot != nil {
+//		return u.snapshot.Metadata.Index + 1, true
+//	}
+//	return 0, false
+//}
+
+std::tuple<uint64_t, bool> Unstable::MaybeFirstIndex() {
+
+	//TODO: snapshot  why snapshot? what's meaning of the function?
+
+	return std::make_tuple<uint64_t, bool>(0, false);
+}
+
+
+//func (u *unstable) slice(lo uint64, hi uint64) []pb.Entry {
+//	u.mustCheckOutOfBounds(lo, hi)
+//	return u.entries[lo-u.offset : hi-u.offset]
+//}
+
+void Unstable::Slice(uint64_t lo, uint64_t hi, std::vector<LogEntry>& entries) {
+	//TODO: mustCheckOutOfBounds
+	entries.insert(entries.begin(), entries_.begin() + lo - offset_, entries_.begin() + hi - offset_);
+}
+
+//// u.offset <= lo <= hi <= u.offset+len(u.offset)
+//func (u *unstable) mustCheckOutOfBounds(lo, hi uint64) {
+
+
 
 } //namespace anraft

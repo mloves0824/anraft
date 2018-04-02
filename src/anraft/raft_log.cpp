@@ -97,9 +97,9 @@ bool RaftLog::StoreLog(int64_t term, int64_t index, const std::string& log) {}
 bool RaftLog::GetLog(int64_t term, int64_t index, std::string* log) {}
 
 uint64_t RaftLog::LastIndex() {
-    int64_t i = unstable_.MaybeLastIndex();
-    if (i >= 0)
-        return (uint64_t)i;
+	auto mli_ret = unstable_.MaybeLastIndex();
+	if (std::get<1>(mli_ret))
+		return std::get<0>(mli_ret);
 
     auto li_ret = storage_->LastIndex();
     if (std::get<1>(li_ret) != ErrNone) {
@@ -189,9 +189,106 @@ std::tuple<anraft::RaftError, uint64_t> RaftLog::Term(uint64_t index) {
 //}
 
 uint64_t RaftLog::FirstIndex() {
-    //if ()
+    //find unstable firstly
+    auto mfi_ret = unstable_.MaybeFirstIndex();
+    if (std::get<1>(mfi_ret)) {
+    	return std::get<0>(mfi_ret);
+    }
+
+    auto fi_ret = storage_->FirstIndex();
+    if (std::get<1>(fi_ret) != ErrNone) {
+    	//TODO: panic
+    }
+
+    return std::get<0>(fi_ret);
 }
 
 
+bool RaftLog::MatchTerm(uint64_t index, uint64_t term) {
+
+}
+
+// l.firstIndex <= lo <= hi <= l.firstIndex + len(l.entries)
+RaftError RaftLog::MustCheckOutOfBounds(uint64_t lo, uint64_t hi) {
+	if (lo > hi) {
+		return ErrParam;
+	}
+
+	auto fi = FirstIndex();
+	if (lo < fi)
+		return ErrCompacted;
+
+	auto length = LastIndex() + 1 - fi;
+	if (lo < fi || hi > fi + length) //TODO: why lo < fi is here ?
+		return ErrCompacted;
+
+	return ErrNone;
+}
+
+
+// slice returns a slice of log entries from lo through hi-1, inclusive.
+//func (l *raftLog) slice(lo, hi, maxSize uint64) ([]pb.Entry, error) {
+RaftError RaftLog::Slice(uint64_t lo, uint64_t hi, uint64_t max_size, std::vector<LogEntry>& entries) {
+	auto ret = MustCheckOutOfBounds(lo, hi);
+	if (ret != ErrNone) {
+		return ret;
+	}
+
+	if (lo == hi)
+		return ErrNone;
+
+	if (lo < unstable_.Offset()) {
+		auto e_ret = storage_->Entries(lo, std::min(hi, unstable_.Offset()), max_size);
+		if (std::get<1>(e_ret) != ErrNone) {
+			return std::get<1>(e_ret);
+		}
+
+		//TODO:check if ents has reached the size limitation
+		entries.insert(entries.end(), std::get<0>(e_ret).begin(), std::get<0>(e_ret).end());
+
+	}
+
+	if (hi > unstable_.Offset()) {
+
+		//unstable := l.unstable.slice(max(lo, l.unstable.offset), hi)
+		std::vector<LogEntry> unstable_entries;
+		unstable_.Slice(std::max(lo, unstable_.Offset()), hi, unstable_entries);
+		if (!unstable_entries.empty())
+			entries.insert(entries.end(), unstable_entries.begin(), unstable_entries.end());
+
+	}
+
+	//TODO :limitSize(ents, maxSize)
+	return ErrNone;
+
+}
+
+
+
+RaftError RaftLog::Entries(uint64_t index, uint64_t max_size, std::vector<LogEntry>& entries) {
+
+	if (index > LastIndex())
+		return ErrNone;
+
+	return Slice(index, LastIndex() + 1, max_size, entries);
+}
+
+//// allEntries returns all entries in the log.
+//func (l *raftLog) allEntries() []pb.Entry {
+//	ents, err := l.entries(l.firstIndex(), noLimit)
+//	if err == nil {
+//		return ents
+//	}
+//	if err == ErrCompacted { // try again if there was a racing compaction
+//		return l.allEntries()
+//	}
+//	// TODO (xiangli): handle error?
+//	panic(err)
+//}
+
+RaftError RaftLog::AllEntries(std::vector<LogEntry>& entries) {
+	return Entries(FirstIndex(), 10000, entries); //TODO: noLimit
+	//TODO: try again if there was a racing compaction
+}
 
 }
