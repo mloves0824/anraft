@@ -123,6 +123,8 @@ uint64_t RaftLog::Append(const std::vector<LogEntry>& entries) {
     return LastIndex();
 }
 
+uint64_t RaftLog::Append(::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries) {}
+
 void RaftLog::SetCommited(uint64_t commited) { committed_ = commited; }
 
 std::tuple<anraft::RaftError, anraft::LogEntry> RaftLog::Slice(uint64_t lo, uint64_t hi, uint64_t max_size) {

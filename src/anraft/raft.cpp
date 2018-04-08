@@ -455,6 +455,8 @@ void Raft::AppendEntry(::google::protobuf::RepeatedPtrField< ::anraft::LogEntry 
 		iter->set_index(li + 1 + i);
 	}
 
+	//raftlog_.Append(entries.);
+
 }
 
 MessageType Raft::VoteRespMsgType(MessageType vote) {

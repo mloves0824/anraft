@@ -58,6 +58,7 @@ public:
     uint64_t LastIndex();
     uint64_t Append(const LogEntry& log_entry);
     uint64_t Append(const std::vector<LogEntry>& log_entry);
+    uint64_t Append(::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries);
 
 
     void SetCommited(uint64_t commited);
