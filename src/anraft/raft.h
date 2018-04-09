@@ -121,6 +121,11 @@ private:
 
     void ForEachProgress(std::function<void(uint64_t, Progress)>);
     static MessageType VoteRespMsgType(MessageType vote);
+
+    // maybeCommit attempts to advance the commit index. Returns true if
+    // the commit index changed (in which case the caller should call
+    // r.bcastAppend).
+    bool MaybeCommit();
 private:
     uint64_t id_;
     uint64_t term_;

@@ -29,4 +29,21 @@ bool Progress::IsPaused() {
     }
 }
 
+
+bool Progress::MaybeUpdate(uint64_t n) {
+    bool is_update = false;
+
+    if (match_ < n) {
+        match_ = n;
+        is_update = true;
+        paused_ = false;
+    }
+
+    if (next_ < n + 1) {
+        next_ = n + 1;
+    }
+
+    return is_update;
+}
+
 } //namespace anraft

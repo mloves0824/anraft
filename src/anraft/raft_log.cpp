@@ -123,7 +123,7 @@ uint64_t RaftLog::Append(const std::vector<LogEntry>& entries) {
     return LastIndex();
 }
 
-uint64_t RaftLog::Append(::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& entries) {}
+uint64_t RaftLog::Append(::google::protobuf::RepeatedPtrField<::anraft::LogEntry>& entries) {}
 
 void RaftLog::SetCommited(uint64_t commited) { committed_ = commited; }
 

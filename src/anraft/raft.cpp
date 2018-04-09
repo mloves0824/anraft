@@ -455,7 +455,10 @@ void Raft::AppendEntry(::google::protobuf::RepeatedPtrField< ::anraft::LogEntry 
 		iter->set_index(li + 1 + i);
 	}
 
-	//raftlog_.Append(entries.);
+    // use latest "last" index after truncate/append
+    uint64_t li = raftlog_.Append(entries);
+    GetProgress(id_)->MaybeUpdate(li);
+    // Regardless of maybeCommit's return, our caller will call bcastAppend.
 
 }
 
@@ -464,6 +467,10 @@ MessageType Raft::VoteRespMsgType(MessageType vote) {
 		return MsgVoteResp;
 	} else
 		return MsgPreVoteResp;
+}
+
+bool Raft::MaybeCommit() {
+
 }
 
 } //namespace anraft

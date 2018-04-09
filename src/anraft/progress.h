@@ -35,7 +35,14 @@ public:
     // MaxInflightMsgs limit.
     bool IsPaused();
 
+    // maybeUpdate returns false if the given n index comes from an outdated message.
+    // Otherwise it updates the progress and returns true.
+    //func(pr *Progress) maybeUpdate(n uint64) bool{
+    bool MaybeUpdate(uint64_t n);
+
 private:
+    uint64_t match_;
+    uint64_t next_;
     // State defines how the leader should interact with the follower.
     //
     // When in ProgressStateProbe, leader sends at most one replication message
