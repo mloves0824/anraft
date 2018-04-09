@@ -14,6 +14,8 @@
 
 // Author: chenbang (chenbang@antalk.com)
 
+#include <vector>
+#include <algorithm>
 #include "raft.h"
 #include "butil/rand_util.h"
 
@@ -396,7 +398,6 @@ void Raft::ResetRandomizedElectionTimeout() {
 }
 
 
-bool Raft::Quorum() {}
 bool Raft::Poll() {}
 
 
@@ -434,11 +435,30 @@ void Raft::SendAppend(uint64_t to) {
 
     Message msg;
     msg.set_to(to);
-    //TODO:
 
-    //term, errt : = r.raftLog.term(pr.Next - 1)
-    //    ents, erre : = r.raftLog.entries(pr.Next, r.maxMsgSize)
-    uint64_t term = raftlog_.GetCurrentTerm();
+    auto term_result = raftlog_.Term(pr->Next() - 1);
+    RaftError term_error = std::get<0>(term_result);
+    uint64_t term = std::get<1>(term_result);
+
+    std::vector<LogEntry> entries;
+    RaftError entries_result = raftlog_.Entries(pr->Next(), max_msg_size_, entries);
+
+    if (term_error != ErrNone || entries_result != ErrNone) {
+    	//TODO: // send snapshot if we failed to get term or entries
+    }
+    else {
+    	msg.set_type(MsgApp);
+    	msg.set_index(pr->Next() - 1);
+    	msg.set_term(term);
+    	//msg.add_entries()->set   //TODO: add_entries
+    	msg.set_commit(raftlog_.Committed());
+    	if (!msg.entries().empty()) {
+    		auto state = pr->State();
+    		//if (state == ProgressStateProbe) //TODO: Progress processing
+    	}
+    }
+
+    Send(msg);
 }
 
 
@@ -456,10 +476,10 @@ void Raft::AppendEntry(::google::protobuf::RepeatedPtrField< ::anraft::LogEntry 
 	}
 
     // use latest "last" index after truncate/append
-    uint64_t li = raftlog_.Append(entries);
+    li = raftlog_.Append(entries);  //TODO
     GetProgress(id_)->MaybeUpdate(li);
     // Regardless of maybeCommit's return, our caller will call bcastAppend.
-
+    MaybeCommit();
 }
 
 MessageType Raft::VoteRespMsgType(MessageType vote) {
@@ -469,8 +489,35 @@ MessageType Raft::VoteRespMsgType(MessageType vote) {
 		return MsgPreVoteResp;
 }
 
-bool Raft::MaybeCommit() {
+//func (r *raft) maybeCommit() bool {
+//	// TODO(bmizerany): optimize.. Currently naive
+//	mis := make(uint64Slice, 0, len(r.prs))
+//	for _, p := range r.prs {
+//		mis = append(mis, p.Match)
+//	}
+//	sort.Sort(sort.Reverse(mis))
+//	mci := mis[r.quorum()-1]
+//	return r.raftLog.maybeCommit(mci, r.Term)
+//}
 
+
+bool Raft::MaybeCommit() {
+	// TODO(bmizerany): optimize.. Currently naive
+	std::vector<uint64_t> vp;
+	for (auto &x : prs_) {
+		vp.push_back(x.second.Match());
+	}
+
+	std::sort(vp.begin(), vp.end(), std::greater<uint64_t>());  //TODO: Reverse???
+	uint64_t index = vp[Quorum() - 1];
+	return raftlog_.MaybeCommit(index, term_);
 }
+
+int Raft::Quorum() {
+	return prs_.size() / 2 + 1;
+}
+
+
+
 
 } //namespace anraft

@@ -17,6 +17,8 @@
 #ifndef SOURCE_DIRECTORY_ANRAFT_PROGRESS_H_
 #define SOURCE_DIRECTORY_ANRAFT_PROGRESS_H_
 
+#include <stdint.h>
+
 namespace anraft {
 
 enum ProgressStateType {
@@ -25,7 +27,7 @@ enum ProgressStateType {
     ProgressStateSnapshot
 };
 
-// Progress represents a follower¡¯s progress in the view of the leader. Leader maintains
+// Progress represents a followerï¿½ï¿½s progress in the view of the leader. Leader maintains
 // progresses of all followers, and sends entries to the follower based on its progress.
 class Progress {
 public:
@@ -39,6 +41,10 @@ public:
     // Otherwise it updates the progress and returns true.
     //func(pr *Progress) maybeUpdate(n uint64) bool{
     bool MaybeUpdate(uint64_t n);
+
+    uint64_t Match() {return match_;}
+    uint64_t Next() {return next_;}
+    ProgressStateType State() {return state_;}
 
 private:
     uint64_t match_;

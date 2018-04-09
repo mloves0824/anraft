@@ -62,8 +62,11 @@ public:
 
 
     void SetCommited(uint64_t commited);
+    uint64_t Committed() {return committed_;}
     bool IsUpToDate(uint64_t last_index, uint64_t term);
     std::tuple<anraft::RaftError, uint64_t> Term(uint64_t i);
+    bool MaybeCommit(uint64_t index, uint64_t term);
+    RaftError Entries(uint64_t index, uint64_t max_size, std::vector<LogEntry>& entries);
 
 private:
     uint64_t LastTerm();
@@ -77,8 +80,9 @@ private:
 
     RaftError MustCheckOutOfBounds(uint64_t lo, uint64_t hi);
     RaftError Slice(uint64_t lo, uint64_t hi, uint64_t max_size, std::vector<LogEntry>& entries);
-    RaftError Entries(uint64_t index, uint64_t max_size, std::vector<LogEntry>& entries);
     RaftError AllEntries(std::vector<LogEntry>& entries);
+    uint64_t ZeroTermOnErrCompacted(std::tuple<anraft::RaftError, uint64_t> result);
+    void CommitTo(uint64_t tocommit);
 private:
     // storage contains all stable entries since the last snapshot.
     Storage *storage_;

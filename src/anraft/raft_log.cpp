@@ -293,4 +293,41 @@ RaftError RaftLog::AllEntries(std::vector<LogEntry>& entries) {
 	//TODO: try again if there was a racing compaction
 }
 
+
+uint64_t RaftLog::ZeroTermOnErrCompacted(std::tuple<anraft::RaftError, uint64_t> result) {
+
+	RaftError error;
+	if ((error = std::get<0>(result)) == ErrNone) {
+		return std::get<1>(result);
+	}
+
+	//如果发生错误,则term为0
+	if (error == ErrCompacted)
+		return 0;
+
+	//TODO panic
+	//	l.logger.Panicf("unexpected error (%v)", err)
+	return 0;
+}
+
+bool RaftLog::MaybeCommit(uint64_t index, uint64_t term) {
+	if (index > committed_ && ZeroTermOnErrCompacted(Term(index)) == term) {
+		CommitTo(index);
+		return true;
+	}
+
+	return false;
+}
+
+void RaftLog::CommitTo(uint64_t tocommit) {
+	//never decrease commit
+	if (committed_ < tocommit) {
+		if (LastIndex() < tocommit) {
+			//TODO :panic
+			//l.logger.Panicf("tocommit(%d) is out of range [lastIndex(%d)]. Was the raft log corrupted, truncated, or lost?", tocommit, l.lastIndex())
+		}
+		committed_ = tocommit;
+	}
+}
+
 }

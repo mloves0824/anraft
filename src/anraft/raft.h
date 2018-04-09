@@ -107,7 +107,6 @@ private:
     bool PastElectionTimeout();
     void ResetRandomizedElectionTimeout();
     void Campaign(CampaignType t);
-    bool Quorum();
     bool Poll();
 
 
@@ -126,6 +125,7 @@ private:
     // the commit index changed (in which case the caller should call
     // r.bcastAppend).
     bool MaybeCommit();
+    int Quorum();
 private:
     uint64_t id_;
     uint64_t term_;
@@ -134,6 +134,7 @@ private:
     bool pre_vote_;
     bool check_quorum_;
     bool is_learner_;
+    uint64_t max_msg_size_;
     std::map<uint64_t, Progress> prs_;
     std::map<uint64_t, Progress> learner_prs_;
     std::map<uint64_t, bool> votes_;
