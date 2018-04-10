@@ -26,6 +26,8 @@
 
 namespace anraft {
 
+typedef ::google::protobuf::RepeatedPtrField<::anraft::LogEntry> PbVectorLogentryType;
+
 class RaftLog {
 public:
     static RaftLog& GetRaftLog();
@@ -83,6 +85,8 @@ private:
     RaftError AllEntries(std::vector<LogEntry>& entries);
     uint64_t ZeroTermOnErrCompacted(std::tuple<anraft::RaftError, uint64_t> result);
     void CommitTo(uint64_t tocommit);
+    bool MatchTerm(uint64_t index, uint64_t term);
+    uint64_t FindConflict(PbVectorLogentryType& entries);
 private:
     // storage contains all stable entries since the last snapshot.
     Storage *storage_;

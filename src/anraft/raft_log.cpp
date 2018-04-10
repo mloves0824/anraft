@@ -176,7 +176,7 @@ std::tuple<anraft::RaftError, uint64_t> RaftLog::Term(uint64_t index) {
         return std::make_tuple<RaftError, uint64_t>(ErrNone, 0);
     }
 
-    //if (unstable_)
+    //if (unstable_) //TODO
 }
 
 //func(l *raftLog) firstIndex() uint64{
@@ -205,10 +205,6 @@ uint64_t RaftLog::FirstIndex() {
     return std::get<0>(fi_ret);
 }
 
-
-bool RaftLog::MatchTerm(uint64_t index, uint64_t term) {
-
-}
 
 // l.firstIndex <= lo <= hi <= l.firstIndex + len(l.entries)
 RaftError RaftLog::MustCheckOutOfBounds(uint64_t lo, uint64_t hi) {
@@ -329,5 +325,38 @@ void RaftLog::CommitTo(uint64_t tocommit) {
 		committed_ = tocommit;
 	}
 }
+
+bool RaftLog::MatchTerm(uint64_t index, uint64_t term) {
+    auto term_result = Term(index);
+    if (std::get<0>(term_result) != ErrNone)
+        return false;
+    return std::get<1>(term_result) == term;
+}
+
+// findConflict finds the index of the conflict.
+// It returns the first pair of conflicting entries between the existing
+// entries and the given entries, if there are any.
+// If there is no conflicting entries, and the existing entries contains
+// all the given entries, zero will be returned.
+// If there is no conflicting entries, but the given entries contains new
+// entries, the index of the first new entry will be returned.
+// An entry is considered to be conflicting if it has the same index but
+// a different term.
+// The first entry MUST have an index equal to the argument 'from'.
+// The index of the given entries MUST be continuously increasing.
+uint64_t RaftLog::FindConflict(PbVectorLogentryType& entries) {
+    for (auto &x : entries) {
+        if (!MatchTerm(x.index(), x.term())) {
+            if (x.index() <= LastIndex()) {
+                //TODO: 
+                //l.logger.Infof("found conflict at index %d [existing term: %d, conflicting term: %d]",
+                //ne.Index, l.zeroTermOnErrCompacted(l.term(ne.Index)), ne.Term)
+            }
+            return x.index();
+        }
+    }
+    return 0;
+}
+
 
 }
