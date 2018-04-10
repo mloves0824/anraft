@@ -126,6 +126,7 @@ private:
     // r.bcastAppend).
     bool MaybeCommit();
     int Quorum();
+    void HandleAppendEntries(Message* msg);
 private:
     uint64_t id_;
     uint64_t term_;

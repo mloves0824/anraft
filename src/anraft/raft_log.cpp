@@ -359,4 +359,43 @@ uint64_t RaftLog::FindConflict(PbVectorLogentryType& entries) {
 }
 
 
+// maybeAppend returns (0, false) if the entries cannot be appended. Otherwise,
+// it returns (last index of new entries, true).
+//func (l *raftLog) maybeAppend(index, logTerm, committed uint64, ents ...pb.Entry) (lastnewi uint64, ok bool) {
+//	if l.matchTerm(index, logTerm) {
+//		lastnewi = index + uint64(len(ents))
+//		ci := l.findConflict(ents)
+//		switch {
+//		case ci == 0:
+//		case ci <= l.committed:
+//			l.logger.Panicf("entry %d conflict with committed entry [committed(%d)]", ci, l.committed)
+//		default:
+//			offset := index + 1
+//			l.append(ents[ci-offset:]...)
+//		}
+//		l.commitTo(min(committed, lastnewi))
+//		return lastnewi, true
+//	}
+//	return 0, false
+//}
+std::tuple<uint64_t, bool> RaftLog::MaybeAppend(uint64_t index,
+											   uint64_t term,
+											   uint64_t committed,
+											   PbVectorLogentryType& ents) {
+	if (MatchTerm(index, term)) {
+		uint64_t lastnewi = index + ents.size();
+		uint64_t ci = FindConflict(ents);
+		if (ci <= committed_) {
+			//TODO:panic
+		} else if (ci != 0) {
+			uint64_t offset = index + 1;
+			//Append(ents.s); TODO
+		}
+		CommitTo(std::min(committed, lastnewi));
+		return std::make_tuple<uint64_t, bool>((uint64_t)(committed), true);
+	}
+
+	return std::make_tuple<uint64_t, bool>(0, false);
+}
+
 }

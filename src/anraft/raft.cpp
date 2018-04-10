@@ -110,7 +110,20 @@ void Raft::ForEachProgress(std::function<void(uint64_t, Progress)> f) {
     }
 }
 
-RaftError Raft::StepFollower(Raft*, Message*) {}
+RaftError Raft::StepFollower(Raft* raft, Message* msg) {
+
+	if (!raft || !msg) {
+		return ErrParam;
+	}
+
+	switch (msg->type()) {
+	case MsgApp:
+		raft->election_elapsed_ = 0;
+		raft->lead_ = msg->from();
+		raft->HandleAppendEntries(msg);
+		break;
+	}
+}
 RaftError Raft::StepCandidate(Raft* raft, Message* msg) {
     // Only handle vote responses corresponding to our candidacy (while in
     // StateCandidate, we may get stale MsgPreVoteResp messages in this term from
@@ -146,6 +159,7 @@ RaftError Raft::StepCandidate(Raft* raft, Message* msg) {
 
 
 RaftError Raft::StepLeader(Raft* raft, Message* msg) {
+
     // These message types do not require any progress for m.From.
     switch (msg->type()) {
     case MsgBeat:
@@ -184,6 +198,21 @@ RaftError Raft::StepLeader(Raft* raft, Message* msg) {
         raft->AppendEntry(const_cast<::google::protobuf::RepeatedPtrField< ::anraft::LogEntry >& >(msg->entries()));
         raft->BcastAppend();
         break;
+    }
+
+//	// All other message types require a progress for m.From (pr).
+    auto pr = raft->GetProgress(msg->from());
+    if (!pr) {
+    	//		r.logger.Debugf("%x no progress available for %x", r.id, m.From)
+    	return ErrParam;
+    }
+
+    switch (msg->type()) {
+    case MsgAppResp:
+    	if (msg->reject()) {}
+    	else {}
+    	break;
+
     }
 }
 
@@ -515,6 +544,36 @@ bool Raft::MaybeCommit() {
 
 int Raft::Quorum() {
 	return prs_.size() / 2 + 1;
+}
+
+void Raft::HandleAppendEntries(Message* msg) {
+	if (msg->index() < raftlog_.Committed()) {
+		Message resp;
+		resp.set_to(msg->from());
+		resp.set_type(MsgAppResp);
+		resp.set_index(raftlog_.Committed());
+		Send(resp);
+	}
+
+	auto ma_ret = raftlog_.MaybeAppend(msg->index(), msg->term(), msg->commit(), const_cast<PbVectorLogentryType&>(msg->entries()));
+	if (std::get<1>(ma_ret) != ErrNone) {
+		Message resp;
+		resp.set_to(msg->from());
+		resp.set_type(MsgAppResp);
+		resp.set_index(std::get<0>(ma_ret));
+		Send(resp);
+	}
+	else {
+		//		r.logger.Debugf("%x [logterm: %d, index: %d] rejected msgApp [logterm: %d, index: %d] from %x",
+		//			r.id, r.raftLog.zeroTermOnErrCompacted(r.raftLog.term(m.Index)), m.Index, m.LogTerm, m.Index, m.From)
+		Message resp;
+		resp.set_to(msg->from());
+		resp.set_type(MsgAppResp);
+		resp.set_index(msg->index());
+		resp.set_reject(true);
+		resp.set_rejecthint(raftlog_.LastIndex());
+		Send(resp);
+	}
 }
 
 
