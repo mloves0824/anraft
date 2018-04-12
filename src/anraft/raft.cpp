@@ -210,7 +210,16 @@ RaftError Raft::StepLeader(Raft* raft, Message* msg) {
     switch (msg->type()) {
     case MsgAppResp:
     	if (msg->reject()) {}
-    	else {}
+    	else {
+            if (pr->MaybeUpdate(msg->index())) {
+                
+            }
+
+            if (raft->MaybeCommit()) {
+                raft->BcastAppend();
+            }
+
+        }
     	break;
 
     }

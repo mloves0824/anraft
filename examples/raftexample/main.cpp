@@ -38,6 +38,7 @@ int main(int argc, char* argv[]) {
 
     std::vector<std::string> peers;
     butil::SplitString(FLAGS_cluster, ',', &peers);
+    //TODO: snapshot
     example::RaftNode::Instance().Init(FLAGS_id, peers, FLAGS_join, NULL);
     if (!example::RaftNode::Instance().Start()) {
     	return -1;

@@ -39,7 +39,6 @@ public:
 
     // maybeUpdate returns false if the given n index comes from an outdated message.
     // Otherwise it updates the progress and returns true.
-    //func(pr *Progress) maybeUpdate(n uint64) bool{
     bool MaybeUpdate(uint64_t n);
 
     uint64_t Match() {return match_;}
