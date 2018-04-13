@@ -19,15 +19,18 @@
 
 namespace example {
 
-KvStorePtr KvStore::NewKVStore(raftsnap::SnapshotterPtr snapshotter,
-                             std::promise<std::string> promise_propose,
-                             std::promise<std::string> promise_commit) {
+bool KvStore::NewKVStore(raftsnap::SnapshotterPtr snapshotter) {
 
-    static KvStore kv;
-    bthread::execution_queue_start(&kv.queue_id_,
+    bthread::execution_queue_start(&queue_id_,
                                     NULL,
                                     KvStore::ReadCommits,
-                                    (void*)&kv);
+                                    (void*)this);
+    return true;
+}
+
+KvStore& KvStore::Instance() {
+	static KvStore g_kv_store;
+	return g_kv_store;
 }
 
 void KvStore::Propose(const std::string& key, const std::string& value) {

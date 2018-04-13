@@ -39,9 +39,10 @@ struct KvStoreChannalMsg {
 
 class KvStore {
 public:
-    static KvStorePtr NewKVStore(raftsnap::SnapshotterPtr snapshotter, 
-                                 std::promise<std::string> promise_propose,
-                                 std::promise<std::string> promise_commit);
+    static KvStore& Instance();
+
+    bool NewKVStore(raftsnap::SnapshotterPtr snapshotter);
+
     void Propose(const std::string& key, const std::string& value);
 private:
     static int ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter);

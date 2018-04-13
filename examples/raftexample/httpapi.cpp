@@ -18,18 +18,15 @@
 
 namespace example {
 
-void HttpApi::ServeHttpKVAPI(KvStorePtr kv_store,
-                             int port,
-                             std::promise<anraft::ConfChange> promise_confchange,
-                             std::future<anraft::RaftError> future_error) {
+void HttpApi::ServeHttpKVAPI(int port) {
+
     //start http server
-    HttpApi service(kv_store, std::move(promise_confchange));
     brpc::Server server;
 
     // Add services into server. Notice the second parameter, because the
     // service is put on stack, we don't want server to delete it, otherwise
     // use brpc::SERVER_OWNS_SERVICE.
-    if (server.AddService(&service, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
+    if (server.AddService(this, brpc::SERVER_DOESNT_OWN_SERVICE) != 0) {
         LOG(ERROR) << "Fail to add http_svc";
         return;
     }
@@ -51,10 +48,17 @@ void HttpApi::ServeHttpKVAPI(KvStorePtr kv_store,
     //}
 }
 
-HttpApi::HttpApi(KvStorePtr kv_store, std::promise<anraft::ConfChange> promise_confchange)
-        : kvstore_(kv_store) ,
-          promise_confchange_(std::move(promise_confchange)) {
+HttpApi& HttpApi::Instance() {
+	static HttpApi g_http_api;
+	return g_http_api;
 }
+
+HttpApi::HttpApi() {}
+
+//HttpApi::HttpApi(KvStorePtr kv_store, std::promise<anraft::ConfChange> promise_confchange)
+//        : kvstore_(kv_store) ,
+//          promise_confchange_(std::move(promise_confchange)) {
+//}
 
 void HttpApi::POST(google::protobuf::RpcController* cntl_base,
                     const HttpRequest*,
@@ -93,10 +97,7 @@ void HttpApi::PUT(google::protobuf::RpcController* cntl_base,
     std::string key;
     std::string value(request->message());
 
-    kvstore_->Propose(key, value);
-
-    //notify future
-    //promise_confchange_.set_value(conf_change); TODO
+    KvStore::Instance().Propose(key, value);
 
     // Fill response.
     cntl->http_response().set_status_code(brpc::HTTP_STATUS_NO_CONTENT);

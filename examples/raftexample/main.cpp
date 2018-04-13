@@ -45,10 +45,7 @@ int main(int argc, char* argv[]) {
     }
 
     raftsnap::SnapshotterPtr snapshotter;
-    //std::promise<std::string> promise_propose;
-    std::promise<std::string> promise_commit;
-    example::KvStore::NewKVStore(snapshotter, std::move(promise_propose), std::move(promise_commit));
+    example::KvStore::Instance().NewKVStore(snapshotter);
 
-    example::KvStorePtr kv_store;
-    example::HttpApi::ServeHttpKVAPI(kv_store, FLAGS_kvport, std::move(promise_confchange), promise_error.get_future());
+    example::HttpApi::Instance().ServeHttpKVAPI(FLAGS_kvport);
 }
