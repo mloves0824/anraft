@@ -52,6 +52,7 @@ public:
                 HttpResponse*,
                 google::protobuf::Closure* done);				
 private:
+	HttpApi();
 
 private:
     KvStore& kvstore_;

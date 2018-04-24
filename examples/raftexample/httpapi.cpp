@@ -23,6 +23,8 @@ HttpApi& HttpApi::Instance() {
 	return g_httpapi;
 }
 
+HttpApi::HttpApi() : kvstore_(KvStore::Instance()) {};
+
 void HttpApi::ServeHttpKVAPI(int port) {
     //start http server
     brpc::Server server;
