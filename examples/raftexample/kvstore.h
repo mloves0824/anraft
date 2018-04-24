@@ -29,21 +29,23 @@
 
 namespace example {
 
-class KvStore;
-typedef std::shared_ptr<KvStore> KvStorePtr;
+enum KvStoreChannelMsgType {
+	MsgTypeKV = 0,
+	MsgTypeError
+};
 
 struct KvStoreChannalMsg {
+	uint8_t cmd;
     std::string body;
 };
 
-
 class KvStore {
 public:
-    static KvStore& Instance();
-
+	static KvStore& Instance();
     bool NewKVStore(raftsnap::SnapshotterPtr snapshotter);
-
     void Propose(const std::string& key, const std::string& value);
+	bool Commit(const KvStoreChannalMsg& msg);
+	bool Lookup(const std::string& key, const std::string& value);
 private:
     static int ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter);
 

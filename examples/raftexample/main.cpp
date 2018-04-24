@@ -45,7 +45,10 @@ int main(int argc, char* argv[]) {
     }
 
     raftsnap::SnapshotterPtr snapshotter;
-    example::KvStore::Instance().NewKVStore(snapshotter);
+	if (!example::KvStore::Instance().NewKVStore(snapshotter)) {
+		return -1;
+	}
 
-    example::HttpApi::Instance().ServeHttpKVAPI(FLAGS_kvport);
+	// the key-value http handler will propose updates to raft
+	example::HttpApi::Instance().ServeHttpKVAPI(FLAGS_kvport);
 }

@@ -18,8 +18,12 @@
 
 namespace example {
 
-void HttpApi::ServeHttpKVAPI(int port) {
+HttpApi& HttpApi::Instance() {
+	static HttpApi g_httpapi;
+	return g_httpapi;
+}
 
+void HttpApi::ServeHttpKVAPI(int port) {
     //start http server
     brpc::Server server;
 
@@ -48,19 +52,8 @@ void HttpApi::ServeHttpKVAPI(int port) {
     //}
 }
 
-HttpApi& HttpApi::Instance() {
-	static HttpApi g_http_api;
-	return g_http_api;
-}
 
-HttpApi::HttpApi() {}
-
-//HttpApi::HttpApi(KvStorePtr kv_store, std::promise<anraft::ConfChange> promise_confchange)
-//        : kvstore_(kv_store) ,
-//          promise_confchange_(std::move(promise_confchange)) {
-//}
-
-void HttpApi::POST(google::protobuf::RpcController* cntl_base,
+void HttpApi::Post(google::protobuf::RpcController* cntl_base,
                     const HttpRequest*,
                     HttpResponse*,
                     google::protobuf::Closure* done) {
@@ -83,7 +76,7 @@ void HttpApi::POST(google::protobuf::RpcController* cntl_base,
 }
 
 
-void HttpApi::PUT(google::protobuf::RpcController* cntl_base,
+void HttpApi::Put(google::protobuf::RpcController* cntl_base,
                     const HttpRequest* request,
                     HttpResponse*,
                     google::protobuf::Closure* done) {
@@ -97,10 +90,32 @@ void HttpApi::PUT(google::protobuf::RpcController* cntl_base,
     std::string key;
     std::string value(request->message());
 
-    KvStore::Instance().Propose(key, value);
+    kvstore_->Propose(key, value);
+
+    //notify future
+    //promise_confchange_.set_value(conf_change); TODO
 
     // Fill response.
     cntl->http_response().set_status_code(brpc::HTTP_STATUS_NO_CONTENT);
 }
+
+
+void HttpApi::Get(google::protobuf::RpcController* cntl_base,
+					const HttpRequest* request,
+					HttpResponse*,
+					google::protobuf::Closure* done) {
+	// This object helps you to call done->Run() in RAII style. If you need
+    // to process the request asynchronously, pass done_guard.release().
+    brpc::ClosureGuard done_guard(done);
+
+    brpc::Controller* cntl =
+        static_cast<brpc::Controller*>(cntl_base);
+
+    std::string key;
+    std::string value(request->message());
+	kvstore_.Lookup(key, value);
+}
+
+					
 
 } //namespace example

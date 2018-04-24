@@ -35,6 +35,9 @@ vs2013/*
 *.bat
 *.exe
 Debug/*
+.vs/
+*.VC.VC.opendb
+*.VC.db
 
 ops/output/*
 

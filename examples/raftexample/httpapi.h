@@ -34,25 +34,27 @@ namespace example {
 // Handler for a http based key-value store backed by raft
 class HttpApi : public HttpService {
 public:
-    static HttpApi& Instance();
-    
+	static HttpApi& Instance();
     void ServeHttpKVAPI(int port);
-
-    void POST(google::protobuf::RpcController* cntl_base,
+    
+    void Post(google::protobuf::RpcController* cntl_base,
                 const HttpRequest*,
                 HttpResponse*,
                 google::protobuf::Closure* done);
 
-    void PUT(google::protobuf::RpcController* cntl_base,
+    void Put(google::protobuf::RpcController* cntl_base,
                 const HttpRequest* request,
                 HttpResponse*,
                 google::protobuf::Closure* done);
+
+    void Get(google::protobuf::RpcController* cntl_base,
+                const HttpRequest* request,
+                HttpResponse*,
+                google::protobuf::Closure* done);				
 private:
-    HttpApi();
-    virtual ~HttpApi() {};
 
 private:
-    std::promise<anraft::ConfChange> promise_confchange_;
+    KvStore& kvstore_;
 };
 
 

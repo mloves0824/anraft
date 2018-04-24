@@ -57,6 +57,7 @@ bool RaftNode::Init(int id,
 }
 
 bool RaftNode::Start() {
+	//There will be some blocking operations in StartRaft.
     bthread_t tid;
     if (bthread_start_background(&tid, NULL, RaftNode::StartRaft, this) != 0) {
     	LOG(ERROR) << "Fail to create bthread: StartRaft";

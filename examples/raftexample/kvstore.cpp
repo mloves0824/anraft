@@ -19,18 +19,21 @@
 
 namespace example {
 
-bool KvStore::NewKVStore(raftsnap::SnapshotterPtr snapshotter) {
-
-    bthread::execution_queue_start(&queue_id_,
-                                    NULL,
-                                    KvStore::ReadCommits,
-                                    (void*)this);
-    return true;
+KvStore& KvStore::Instance() {
+	static KvStore g_kvstore;
+	return g_kvstore;
 }
 
-KvStore& KvStore::Instance() {
-	static KvStore g_kv_store;
-	return g_kv_store;
+bool KvStore::NewKVStore(raftsnap::SnapshotterPtr snapshotter) {
+	snapshotter_ = snapshotter;
+	if (bthread::execution_queue_start(&queue_id_,
+		NULL,
+		KvStore::ReadCommits,
+		this)) {
+		//TODO chenb: log
+		return false;
+		}
+	}
 }
 
 void KvStore::Propose(const std::string& key, const std::string& value) {
@@ -43,6 +46,21 @@ void KvStore::Propose(const std::string& key, const std::string& value) {
     RaftNode::Instance().Propose(buf);
 }
 
+bool KvStore::Commit(const KvStoreChannalMsg& msg) {
+	if (bthread::execution_queue_execute(queue_id_, msg)) {
+		//TODO chenb: log
+		return false;
+	}
+	return true;
+}
+
+bool KvStore::Lookup(const std::string& key, const std::string& value) {
+	std::lock_guard<std::mutex> guard(mutex_);
+	value = kv_store_[key];
+	return true;
+}
+
+
 int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& iter) {
 	KvStore* kv = (KvStore*)meta;
     if (iter.is_queue_stopped()) {
@@ -51,11 +69,23 @@ int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& i
     }
 
     for (; iter; ++iter) {
-        if (iter->body.empty()) {}
+		switch (iter->cmd) {
+		case MsgTypeKV:
+			if (iter->body.empty()) {}
 
-        KV kv;
-        if (!kv.ParseFromString(iter->body)) { }   //TODO
-        //kv->kv_store_[kv.key()] = kv.val();
+			KV kv;
+			if (!kv.ParseFromString(iter->body)) {}   //TODO
+				//kv->kv_store_[kv.key()] = kv.val();
+			break;
+
+		case MsgTypeError:
+			break;
+
+		default:
+			break;
+		}
+
+
     }
 
 }
