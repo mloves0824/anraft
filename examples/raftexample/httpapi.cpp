@@ -71,7 +71,7 @@ void HttpApi::Post(google::protobuf::RpcController* cntl_base,
     conf_change.set_id(1); //TODO
 
     //notify future
-    promise_confchange_.set_value(conf_change);
+    //promise_confchange_.set_value(conf_change);
 
     // Fill response.
     cntl->http_response().set_status_code(brpc::HTTP_STATUS_NO_CONTENT);
@@ -92,7 +92,7 @@ void HttpApi::Put(google::protobuf::RpcController* cntl_base,
     std::string key;
     std::string value(request->message());
 
-    kvstore_->Propose(key, value);
+    //kvstore_->Propose(key, value);
 
     //notify future
     //promise_confchange_.set_value(conf_change); TODO

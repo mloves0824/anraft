@@ -47,3 +47,16 @@ nohup.out
 *.pb.h
 *.pb.cc
 
+third/mbrpc/include
+third/mbrpc/lib
+
+build/
+cmake/
+src/anraft/CMakeLists.txt.braft
+src/anraft/CMakeLists.txt.new
+src/anraft/CMakeLists.txt.old
+
+CMakeLists.txt.braft
+CMakeLists.txt.new
+CMakeLists.txt.old
+

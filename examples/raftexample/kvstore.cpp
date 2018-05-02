@@ -33,7 +33,8 @@ bool KvStore::NewKVStore(raftsnap::SnapshotterPtr snapshotter) {
 		//TODO chenb: log
 		return false;
 		}
-	}
+
+	return true;
 }
 
 void KvStore::Propose(const std::string& key, const std::string& value) {
@@ -56,7 +57,7 @@ bool KvStore::Commit(const KvStoreChannalMsg& msg) {
 
 bool KvStore::Lookup(const std::string& key, const std::string& value) {
 	std::lock_guard<std::mutex> guard(mutex_);
-	value = kv_store_[key];
+	//value = kv_store_[key];
 	return true;
 }
 
@@ -73,8 +74,8 @@ int KvStore::ReadCommits(void* meta, bthread::TaskIterator<KvStoreChannalMsg>& i
 		case MsgTypeKV:
 			if (iter->body.empty()) {}
 
-			KV kv;
-			if (!kv.ParseFromString(iter->body)) {}   //TODO
+			//KV kv;
+			//if (!kv.ParseFromString(iter->body)) {}   //TODO
 				//kv->kv_store_[kv.key()] = kv.val();
 			break;
 

@@ -12,9 +12,11 @@ ELSE(WIN32)
 		SET(PROJECT_LIB_DIR ${PROJECT_SOURCE_DIR}/../../ops/output/debug/debug_linux_x64/dep)
 		SET(LIBRARY_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../ops/output/debug/debug_linux_x64/dep)
 		SET(PROJECT_LIBS_PLATFORM
-			protobuf
+			#protobuf
+			/usr/local/lib/libprotobuf.a
 			pthread
 			dl
+			z
 		)
 		MESSAGE(STATUS "${PROJECT_OUTNAME} is VERSION: debug_linux_x64")
 

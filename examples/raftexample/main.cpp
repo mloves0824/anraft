@@ -32,10 +32,6 @@ int main(int argc, char* argv[]) {
     // Parse gflags. We recommend you to use gflags as well.
 	google::ParseCommandLineFlags(&argc, &argv, true);
 
-    std::promise<anraft::ConfChange> promise_confchange;
-    std::promise<std::string> promise_propose;
-    std::promise<anraft::RaftError> promise_error;
-
     std::vector<std::string> peers;
     butil::SplitString(FLAGS_cluster, ',', &peers);
     //TODO: snapshot

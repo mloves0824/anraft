@@ -22,7 +22,7 @@
 #include <butil/logging.h>
 #include <brpc/server.h>
 #include <brpc/restful.h>
-#include "http.pb.h"
+#include "example_http.pb.h"
 #include "proto/raft.pb.h"
 
 #include "../raftexample/kvstore.h"

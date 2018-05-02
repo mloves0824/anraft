@@ -10,14 +10,19 @@ ELSE(WIN32)
 		SET(PROJECT_LIB_DIR ${PROJECT_SOURCE_DIR}/../../../ops/output/debug/debug_linux_x64/dep)
 		SET(EXECUTABLE_OUTPUT_PATH ${PROJECT_SOURCE_DIR}/../../ops/output/debug/debug_linux_x64/app)
 		SET(PROJECT_LIBS_PLATFORM
-			protobuf
+			#protobuf
+			/usr/local/lib/libprotobuf.a
 			proto
 			gflags
 			pthread
 			dl
 			anraft
 			rafthttp
-			${PROJECT_SOURCE_DIR}/../../third/mbrpc/lib/libbrpc.so
+			${PROJECT_SOURCE_DIR}/../../third/mbrpc/lib/libbrpc.a
+			crypto
+			ssl
+			leveldb
+			z
 		)
 		MESSAGE(STATUS "${PROJECT_OUTNAME} is VERSION: debug_linux_x64")
 
